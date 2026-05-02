@@ -1,0 +1,182 @@
+/* ============================
+   Ars Prompt — Estilos Customizados
+   Complementa o Bootstrap 5
+   ============================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ---------- Variáveis ---------- */
+:root {
+  --brand-bg: #0d1117;
+  --brand-surface: #161b22;
+  --brand-border: #30363d;
+  --brand-accent: #58a6ff;
+  --brand-accent-hover: #79b8ff;
+  --brand-green: #3fb950;
+  --brand-red: #f85149;
+  --brand-text: #e6edf3;
+  --brand-muted: #8b949e;
+  --radius: 12px;
+}
+
+/* ---------- Reset / Base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--brand-bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(88, 166, 255, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(63, 185, 80, 0.07), transparent);
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--brand-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Card principal ---------- */
+.card-auth {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+  animation: fadeUp 0.45s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Logo / Topo ---------- */
+.brand-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--brand-accent);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.card-title {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--brand-text);
+  margin-bottom: 0.25rem;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: var(--brand-muted);
+  margin-bottom: 1.75rem;
+}
+
+/* ---------- Labels ---------- */
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--brand-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+/* ---------- Inputs ---------- */
+.form-control {
+  background: var(--brand-bg);
+  border: 1px solid var(--brand-border);
+  color: var(--brand-text);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control::placeholder {
+  color: var(--brand-muted);
+  opacity: 0.6;
+}
+
+.form-control:focus {
+  background: var(--brand-bg);
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  color: var(--brand-text);
+  outline: none;
+}
+
+/* ---------- Botão ---------- */
+.btn-primary-custom {
+  background: var(--brand-accent);
+  color: #0d1117;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary-custom:hover {
+  background: var(--brand-accent-hover);
+  box-shadow: 0 4px 20px rgba(88, 166, 255, 0.25);
+}
+
+.btn-primary-custom:active {
+  transform: scale(0.98);
+}
+
+.btn-primary-custom:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Mensagem de feedback ---------- */
+.msg-feedback {
+  font-size: 0.875rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+  min-height: 1.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+  display: none;
+}
+
+.msg-feedback.show { display: block; }
+.msg-feedback.success { color: var(--brand-green); background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.3); }
+.msg-feedback.error   { color: var(--brand-red);   background: rgba(248, 81, 73, 0.1);  border: 1px solid rgba(248, 81, 73, 0.3);  }
+.msg-feedback.loading { color: var(--brand-muted);  background: rgba(139, 148, 158, 0.1); border: 1px solid var(--brand-border); }
+
+/* ---------- Divider ---------- */
+.divider {
+  height: 1px;
+  background: var(--brand-border);
+  margin: 1.75rem 0;
+}
+
+/* ---------- Hint de senha ---------- */
+.password-hint {
+  font-size: 0.78rem;
+  color: var(--brand-muted);
+  margin-top: 0.3rem;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 480px) {
+  .card-auth {
+    padding: 2rem 1.25rem;
+    margin: 1rem;
+    border-radius: 10px;
+  }
+}
