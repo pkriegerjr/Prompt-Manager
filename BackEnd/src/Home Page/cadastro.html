@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ars Prompt — Entrar</title>
+  <title>Ars Prompt — Criar conta</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -20,13 +20,21 @@
 
       <!-- Logo -->
       <div class="brand-logo"><i class="bi bi-braces me-1"></i>ars-prompt</div>
-      <h1 class="card-title">Entrar</h1>
-      <p class="card-subtitle">Bem-vindo de volta. Acesse sua conta.</p>
+      <h1 class="card-title">Criar conta</h1>
+      <p class="card-subtitle">Preencha os dados para se registrar.</p>
 
       <div class="divider"></div>
 
       <!-- Formulário -->
-      <form id="loginForm" novalidate>
+      <form id="cadastroForm" novalidate>
+
+        <div class="mb-3">
+          <label for="username" class="form-label">
+            <i class="bi bi-person me-1"></i>Usuário
+          </label>
+          <input type="text" id="username" class="form-control"
+                 placeholder="seu_usuario" required autocomplete="username">
+        </div>
 
         <div class="mb-3">
           <label for="email" class="form-label">
@@ -41,11 +49,14 @@
             <i class="bi bi-lock me-1"></i>Senha
           </label>
           <input type="password" id="password" class="form-control"
-                 placeholder="••••••••••" required autocomplete="current-password">
+                 placeholder="••••••••••" required autocomplete="new-password">
+          <p class="hint mt-1">
+            <i class="bi bi-info-circle me-1"></i>Mínimo de 9 caracteres.
+          </p>
         </div>
 
-        <button type="submit" class="btn-primary-custom" id="btnEntrar">
-          <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+        <button type="submit" class="btn-primary-custom" id="btnCadastrar">
+          <i class="bi bi-person-plus me-2"></i>Cadastrar
         </button>
       </form>
 
@@ -53,7 +64,7 @@
 
       <div class="divider"></div>
       <span class="link-secondary">
-        Não tem conta? <a href="cadastro.html">Cadastre-se</a>
+        Já tem conta? <a href="View.html">Entrar</a>
       </span>
 
     </div>
@@ -61,9 +72,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const form     = document.getElementById('loginForm');
+    const form     = document.getElementById('cadastroForm');
     const mensagem = document.getElementById('mensagem');
-    const btn      = document.getElementById('btnEntrar');
+    const btn      = document.getElementById('btnCadastrar');
 
     function showMsg(texto, tipo) {
       mensagem.textContent = texto;
@@ -74,28 +85,29 @@
       e.preventDefault();
 
       const dados = {
+        username: document.getElementById('username').value.trim(),
         email:    document.getElementById('email').value.trim(),
         password: document.getElementById('password').value
       };
 
+      if (dados.password.length < 9) {
+        showMsg('A senha deve ter no mínimo 9 caracteres.', 'error');
+        return;
+      }
+
       btn.disabled = true;
-      showMsg('Verificando...', 'loading');
+      showMsg('Enviando dados...', 'loading');
 
       try {
-        const response = await fetch('http://localhost:8081/api/login', {
+        const response = await fetch('http://localhost:8081/api/usuarios', {
           method:  'POST',
           body:    JSON.stringify(dados),
           headers: { 'Content-Type': 'application/json' }
         });
 
         const resultado = await response.text();
-
-        if (response.ok) {
-          showMsg(resultado, 'success');
-          setTimeout(() => window.location.href = 'dashboard.html', 1000);
-        } else {
-          showMsg(resultado, 'error');
-        }
+        showMsg(resultado, response.ok ? 'success' : 'error');
+        if (response.ok) form.reset();
 
       } catch {
         showMsg('Erro ao conectar com o servidor Java. Verifique se o App.java está rodando.', 'error');
