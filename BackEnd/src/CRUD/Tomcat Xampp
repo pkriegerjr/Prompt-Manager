@@ -4,9 +4,9 @@ questão de por os arquivos na pasta C:\xampp\tomcat\webapps
 Pos isso lançe o servidor manualmente no seu CMD com este inicializador:
 cd "c:\xampp\tomcat\webapps\Ars Prompt\CRUD" ps:recomendavel cirar uma pasta para todo o codigo java do seu projeto dentro do \webapps que ex:\Ars Prompt.
 
-javac App.java EmailException.java SenhaException.java
+javac -cp ".;mysql-connector-j-9.7.0.jar" App.java EmailException.java SenhaException.java
 
-java App
+java -cp ".;mysql-connector-j-9.7.0.jar" App
 
 Apos isso você deverá estar pronto para rodalo, rode o Html no navegador
 Caso queira verificar os dados armazenados utilize esse código na barra do seu navegador

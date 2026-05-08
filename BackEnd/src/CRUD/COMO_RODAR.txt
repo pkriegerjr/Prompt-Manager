@@ -1,0 +1,49 @@
+════════════════════════════════════════════════════════
+  ARS PROMPT — Como compilar e rodar (igual antes!)
+════════════════════════════════════════════════════════
+
+PASSO 1 — Estrutura de arquivos na pasta CRUD:
+
+  C:\xampp\tomcat\webapps\Ars-Promptum\BackEnd\src\CRUD\
+    ├── App.java                  ← servidor completo
+    ├── EmailException.java
+    ├── SenhaException.java
+    └── mysql-connector-j-X.X.X.jar  ← coloque aqui!
+
+  (as pastas dao/ e model/ não são mais necessárias)
+
+────────────────────────────────────────────────────────
+
+PASSO 2 — Abra o CMD e vá até a pasta:
+
+  cd C:\xampp\tomcat\webapps\Ars-Promptum\BackEnd\src\CRUD
+
+────────────────────────────────────────────────────────
+
+PASSO 3 — Compile (substitua X.X.X pela versão do seu jar):
+
+  javac -cp ".;mysql-connector-j-X.X.X.jar" App.java EmailException.java SenhaException.java
+
+  Exemplo real:
+  javac -cp ".;mysql-connector-j-9.2.0.jar" App.java EmailException.java SenhaException.java
+
+────────────────────────────────────────────────────────
+
+PASSO 4 — Rode o servidor:
+
+  java -cp ".;mysql-connector-j-X.X.X.jar" App
+
+  Exemplo real:
+  java -cp ".;mysql-connector-j-9.2.0.jar" App
+
+────────────────────────────────────────────────────────
+
+PASSO 5 — Abra o HTML no navegador e teste:
+
+  http://localhost:8081/api/usuarios
+  http://localhost:8081/api/categorias
+
+════════════════════════════════════════════════════════
+  IMPORTANTE: O MySQL do XAMPP deve estar rodando!
+  Crie o banco antes com o arquivo ars_database_v2.sql
+════════════════════════════════════════════════════════
