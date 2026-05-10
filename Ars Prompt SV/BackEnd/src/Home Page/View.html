@@ -89,9 +89,9 @@
 
           showMsg('Login realizado! Redirecionando...', 'success');
 
-          // Redireciona conforme tipo: admin → admin.html | usuario → dashboard.html
+          // Redireciona conforme tipo: admin → admin.html | usuario → PagUsuario.html
           setTimeout(() => {
-            window.location.href = data.tipo === 'admin' ? 'admin.html' : 'dashboard.html';
+            window.location.href = data.tipo === 'admin' ? 'admin.html' : 'PagUsuario.html';
           }, 800);
 
         } else {
