@@ -61,6 +61,10 @@
         <i class="bi bi-journal-text"></i>
         <span>Histórico de Logs</span>
       </a>
+      <a href="#" class="sidebar-link" data-section="novo-admin">
+        <i class="bi bi-shield-plus"></i>
+        <span>Novo Admin</span>
+      </a>
     </nav>
 
     <!-- Rodapé sidebar -->
@@ -412,6 +416,38 @@
     </div>
   </div>
 
+  <!-- ── SEÇÃO: NOVO ADMIN ── -->
+  <div id="section-novo-admin" class="admin-section">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Novo Administrador</h1>
+        <p class="section-sub">Crie uma nova conta de administrador. Um email de verificação será enviado.</p>
+      </div>
+    </div>
+    <div class="inline-form" style="display:block;max-width:480px">
+      <div class="inline-form-body">
+        <div class="field-group mb-3">
+          <label class="field-label">Nome de usuário</label>
+          <input type="text" class="field-input" id="newAdminUser" placeholder="admin_nome">
+        </div>
+        <div class="field-group mb-3">
+          <label class="field-label">E-mail</label>
+          <input type="email" class="field-input" id="newAdminEmail" placeholder="admin@email.com">
+        </div>
+        <div class="field-group mb-4">
+          <label class="field-label">Senha</label>
+          <input type="password" class="field-input" id="newAdminSenha" placeholder="Mínimo 9 caracteres">
+        </div>
+        <div class="inline-form-actions">
+          <button class="btn-action-primary" id="btnCriarAdmin">
+            <i class="bi bi-shield-plus me-1"></i>Criar administrador
+          </button>
+        </div>
+        <div class="msg-feedback" id="msgNovoAdmin" style="margin-top:0.75rem"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast de feedback -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -420,7 +456,10 @@
   <script>
   const API = 'http://localhost:8081/api';
 
-  // ── Cores por tipo de ação nos logs ─────────────────────
+  // ── Verifica sessão ──────────────────────────────────────
+  const sTipo = sessionStorage.getItem('usuario_tipo');
+  if (sTipo !== 'admin') window.location.href = 'View.html';
+// ── Cores por tipo de ação nos logs ─────────────────────
   const logCores = {
     LOGIN:'var(--accent)', CADASTRO:'var(--green)', CRIAR_PROMPT:'var(--green)',
     EDITAR_PROMPT:'var(--yellow)', DELETAR_PROMPT:'var(--red)',
@@ -431,7 +470,7 @@
   };
 
   // ── Navegação ────────────────────────────────────────────
-  const sectionTitles = { dashboard:'Dashboard', usuarios:'Usuários', prompts:'Prompts', categorias:'Categorias', logs:'Histórico de Logs' };
+  const sectionTitles = { dashboard:'Dashboard', usuarios:'Usuários', prompts:'Prompts', categorias:'Categorias', logs:'Histórico de Logs', 'novo-admin':'Novo Admin' };
 
   function goTo(id) {
     document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
@@ -596,9 +635,19 @@
         <td>
           <div style="display:flex;gap:0.3rem">
             ${u.ativo
-              ? `<button class="tbl-btn danger" title="Desativar" onclick="toggleConta(${u.id},0,'${esc(u.username)}')"><i class="bi bi-toggle-off"></i></button>`
-              : `<button class="tbl-btn" title="Ativar" onclick="toggleConta(${u.id},1,'${esc(u.username)}')"><i class="bi bi-toggle-on"></i></button>`
+              ? `<button class="tbl-btn warning" title="Desativar conta" onclick="toggleConta(${u.id},0,'${esc(u.username)}')">
+                   <i class="bi bi-toggle-off"></i>
+                 </button>`
+              : `<button class="tbl-btn" title="Ativar conta" onclick="toggleConta(${u.id},1,'${esc(u.username)}')">
+                   <i class="bi bi-toggle-on"></i>
+                 </button>`
             }
+            <button class="tbl-btn" title="Tornar administrador" onclick="tornarAdmin(${u.id},'${esc(u.username)}')">
+              <i class="bi bi-shield-plus"></i>
+            </button>
+            <button class="tbl-btn danger" title="Deletar conta" onclick="deletarUsuario(${u.id},'${esc(u.username)}')">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </td>
       </tr>`).join('');
@@ -615,6 +664,42 @@
           const msg = await res.text();
           showToast(msg, res.ok ? 'success' : 'error');
           if (res.ok) carregarUsuarios();
+        } catch { showToast('Erro ao conectar.', 'error'); }
+      }
+    );
+  }
+
+  // ── Tornar admin ─────────────────────────────────────────
+  async function tornarAdmin(id, nome) {
+    confirmar(
+      'Tornar administrador',
+      `Promover "${nome}" a administrador? Ele poderá acessar o painel admin.`,
+      async () => {
+        try {
+          const res = await fetch(`${API}/admin/tornar-admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+          });
+          const msg = await res.text();
+          showToast(msg, res.ok ? 'success' : 'error');
+          if (res.ok) carregarUsuarios();
+        } catch { showToast('Erro ao conectar.', 'error'); }
+      }
+    );
+  }
+
+  // ── Deletar usuário ───────────────────────────────────────
+  async function deletarUsuario(id, nome) {
+    confirmar(
+      '⚠ Deletar conta permanentemente',
+      `Deletar a conta de "${nome}"? Todos os prompts e dados serão apagados. Esta ação é irreversível.`,
+      async () => {
+        try {
+          const res = await fetch(`${API}/admin/deletar-usuario/${id}`, { method: 'DELETE' });
+          const msg = await res.text();
+          showToast(msg, res.ok ? 'success' : 'error');
+          if (res.ok) { carregarUsuarios(); loadMetrics(); }
         } catch { showToast('Erro ao conectar.', 'error'); }
       }
     );
@@ -904,6 +989,46 @@
   function esc(s) {
     return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+
+  // ════════════════════════════════════════════════════════
+  //  CRIAR NOVO ADMIN
+  // ════════════════════════════════════════════════════════
+  document.getElementById('btnCriarAdmin').addEventListener('click', async () => {
+    const user  = document.getElementById('newAdminUser').value.trim();
+    const email = document.getElementById('newAdminEmail').value.trim();
+    const senha = document.getElementById('newAdminSenha').value;
+    const msg   = document.getElementById('msgNovoAdmin');
+
+    function showAdminMsg(texto, tipo) {
+      msg.textContent = texto;
+      msg.className   = 'msg-feedback show ' + tipo;
+    }
+
+    if (!user || !email || !senha) { showAdminMsg('Preencha todos os campos.', 'error'); return; }
+    if (senha.length < 9)          { showAdminMsg('Senha mínima de 9 caracteres.', 'error'); return; }
+
+    document.getElementById('btnCriarAdmin').disabled = true;
+    showAdminMsg('Criando conta e enviando email...', 'loading');
+
+    try {
+      const res = await fetch(`${API}/admin/criar-admin`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ username: user, email, password: senha })
+      });
+      const texto = await res.text();
+      showAdminMsg(texto, res.ok ? 'success' : 'error');
+      if (res.ok) {
+        document.getElementById('newAdminUser').value  = '';
+        document.getElementById('newAdminEmail').value = '';
+        document.getElementById('newAdminSenha').value = '';
+      }
+    } catch {
+      showAdminMsg('Erro ao conectar com o servidor.', 'error');
+    } finally {
+      document.getElementById('btnCriarAdmin').disabled = false;
+    }
+  });
 
   // ════════════════════════════════════════════════════════
   //  INIT — carrega dashboard ao abrir
