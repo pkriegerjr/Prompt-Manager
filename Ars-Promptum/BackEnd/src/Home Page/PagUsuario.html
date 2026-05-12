@@ -113,7 +113,14 @@
 
           <div class="mb-3">
             <label class="form-label"><i class="bi bi-tag me-1"></i>Categoria</label>
-            <input type="text" id="promptCategoria" class="form-control dark-input" placeholder="Ex: Escrita, Código, Marketing...">
+            <!-- substitua o select atual por isto: -->
+            <div style="position:relative;">
+              <i class="bi bi-tag" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none;"></i>
+              <select id="promptCategoria" class="form-control dark-input" style="padding-left:32px; padding-right:32px; appearance:none; cursor:pointer;">
+                <option value="0">Sem categoria</option>
+              </select>
+              <i class="bi bi-chevron-down" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none;"></i>
+            </div>
           </div>
 
           <div class="mb-3">
@@ -178,6 +185,16 @@
   <script>
     const API = 'http://localhost:8081/api';
 
+// ── Sessão ──────────────────────────────────────────────
+const uid   = sessionStorage.getItem('usuario_id');
+const uNome = sessionStorage.getItem('usuario_nome');
+const uTipo = sessionStorage.getItem('usuario_tipo');
+
+if (!uid || uTipo !== 'usuario') window.location.href = 'View.html';
+
+// Atualiza nome na navbar
+document.getElementById('navUsername').textContent = uNome || '—';
+
     /* ── Utils ────────────────────────────────── */
     function toast(msg, tipo = 'success') {
       const el = document.getElementById('toastMsg');
@@ -191,68 +208,90 @@
     }
 
     /* ── Carregar prompts ──────────────────────── */
-    async function carregarPrompts() {
-      setLoader(true);
-      document.getElementById('promptGrid').innerHTML = '';
-      document.getElementById('emptyState').classList.add('d-none');
+    let categorias = [];
 
-      try {
-        const res  = await fetch(`${API}/prompts`);
-        const data = await res.json();
-        renderGrid(data);
-        populaCategorias(data);
-      } catch {
-        toast('Erro ao conectar com o servidor Java.', 'error');
-      } finally {
-        setLoader(false);
-      }
-    }
+async function carregarCategorias() {
+  try {
+    const res = await fetch(`${API}/categorias`);
+    categorias = await res.json();
+
+    const sel = document.getElementById('selectCategoria');
+    sel.innerHTML = '<option value="">Todas as categorias</option>';
+    categorias.forEach(c => {
+      sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+    });
+  } catch { /* offline */ }
+
+  // Popula também o select do modal
+const selModal = document.getElementById('promptCategoria');
+selModal.innerHTML = '<option value="0">Sem categoria</option>';
+categorias.forEach(c => {
+  selModal.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+});
+}
+
+async function carregarPrompts() {
+  setLoader(true);
+  document.getElementById('promptGrid').innerHTML = '';
+  document.getElementById('emptyState').classList.add('d-none');
+
+  try {
+    const res  = await fetch(`${API}/prompts?uid=${uid}`); // ← uid aqui
+    const data = await res.json();
+    todosPrompts = data;
+    renderGrid(data);
+  } catch {
+    toast('Erro ao conectar com o servidor Java.', 'error');
+  } finally {
+    setLoader(false);
+  }
+}
 
     function renderGrid(prompts) {
-      const grid = document.getElementById('promptGrid');
-      const busca = document.getElementById('inputBusca').value.toLowerCase();
-      const cat   = document.getElementById('selectCategoria').value;
+  const grid  = document.getElementById('promptGrid');
+  const busca = document.getElementById('inputBusca').value.toLowerCase();
+  const catId = document.getElementById('selectCategoria').value;
 
-      const filtrados = prompts.filter(p => {
-        const matchBusca = !busca || p.titulo?.toLowerCase().includes(busca) || p.categoria?.toLowerCase().includes(busca);
-        const matchCat   = !cat   || p.categoria === cat;
-        return matchBusca && matchCat;
-      });
+  const filtrados = prompts.filter(p => {
+    const matchBusca = !busca || p.titulo?.toLowerCase().includes(busca);
+    const matchCat   = !catId || p.categoriaId == catId; // ← categoriaId numérico
+    return matchBusca && matchCat;
+  });
 
-      grid.innerHTML = '';
+  grid.innerHTML = '';
 
-      if (filtrados.length === 0) {
-        document.getElementById('emptyState').classList.remove('d-none');
-        return;
-      }
+  if (filtrados.length === 0) {
+    document.getElementById('emptyState').classList.remove('d-none');
+    return;
+  }
 
-      document.getElementById('emptyState').classList.add('d-none');
+  document.getElementById('emptyState').classList.add('d-none');
 
-      filtrados.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'prompt-card';
-        card.innerHTML = `
-          <div class="prompt-card-header">
-            <span class="prompt-badge">${p.categoria || 'Geral'}</span>
-            <div class="prompt-actions">
-              <button class="icon-btn edit-btn" title="Editar" onclick="abrirEdicao(${p.id})">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="icon-btn delete-btn" title="Excluir" onclick="abrirDelete(${p.id}, '${(p.titulo||'').replace(/'/g,"\\'")}')">
-                <i class="bi bi-trash3"></i>
-              </button>
-            </div>
-          </div>
-          <h3 class="prompt-card-title">${p.titulo || 'Sem título'}</h3>
-          ${p.descricao ? `<p class="prompt-card-desc">${p.descricao}</p>` : ''}
-          <div class="prompt-card-content">${p.conteudo || ''}</div>
-          <button class="btn-copy" onclick="copiar(this, \`${(p.conteudo||'').replace(/`/g,'\\`')}\`)">
-            <i class="bi bi-clipboard me-1"></i>Copiar
+  filtrados.forEach(p => {
+    const catNome = categorias.find(c => c.id == p.categoriaId)?.nome || 'Geral'; // ← resolve nome
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.innerHTML = `
+      <div class="prompt-card-header">
+        <span class="prompt-badge">${catNome}</span>
+        <div class="prompt-actions">
+          <button class="icon-btn edit-btn" title="Editar" onclick="abrirEdicao(${p.id})">
+            <i class="bi bi-pencil"></i>
           </button>
-        `;
-        grid.appendChild(card);
-      });
-    }
+          <button class="icon-btn delete-btn" title="Excluir" onclick="abrirDelete(${p.id}, '${(p.titulo||'').replace(/'/g,"\\'")}')">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+      </div>
+      <h3 class="prompt-card-title">${p.titulo || 'Sem título'}</h3>
+      <div class="prompt-card-content">${p.conteudo || ''}</div>
+      <button class="btn-copy" onclick="copiar(this, \`${(p.conteudo||'').replace(/`/g,'\\`')}\`)">
+        <i class="bi bi-clipboard me-1"></i>Copiar
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+}
 
     function populaCategorias(prompts) {
       const sel  = document.getElementById('selectCategoria');
@@ -293,30 +332,25 @@
     });
 
     async function abrirEdicao(id) {
-      try {
-        const res = await fetch(`${API}/prompts/${id}`);
-        const p   = await res.json();
-        document.getElementById('modalTitle').innerHTML   = '<i class="bi bi-pencil-square me-2"></i>Editar Prompt';
-        document.getElementById('promptId').value         = p.id;
-        document.getElementById('promptTitulo').value     = p.titulo    || '';
-        document.getElementById('promptCategoria').value  = p.categoria || '';
-        document.getElementById('promptConteudo').value   = p.conteudo  || '';
-        document.getElementById('promptDescricao').value  = p.descricao || '';
-        document.getElementById('msgModal').textContent   = '';
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPrompt')).show();
-      } catch {
-        toast('Erro ao carregar prompt.', 'error');
-      }
+      const p = todosPrompts.find(x => x.id == id); // usa cache local, sem fetch extra
+      if (!p) return;
+      document.getElementById('modalTitle').innerHTML  = '<i class="bi bi-pencil-square me-2"></i>Editar Prompt';
+      document.getElementById('promptId').value        = p.id;
+      document.getElementById('promptTitulo').value    = p.titulo   || '';
+      document.getElementById('promptCategoria').value = p.categoriaId || '0'; // ← categoriaId
+      document.getElementById('promptConteudo').value  = p.conteudo || '';
+      document.getElementById('msgModal').textContent  = '';
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPrompt')).show();
     }
 
     document.getElementById('btnSalvar').addEventListener('click', async () => {
-      const id    = document.getElementById('promptId').value;
-      const dados = {
-        titulo:    document.getElementById('promptTitulo').value.trim(),
-        categoria: document.getElementById('promptCategoria').value.trim(),
-        conteudo:  document.getElementById('promptConteudo').value.trim(),
-        descricao: document.getElementById('promptDescricao').value.trim(),
-      };
+    const id    = document.getElementById('promptId').value;
+    const dados = {
+      usuarioId:  uid,                                                    // ← obrigatório
+      categoriaId: document.getElementById('promptCategoria').value,     // ← era "categoria"
+      titulo:    document.getElementById('promptTitulo').value.trim(),
+      conteudo:  document.getElementById('promptConteudo').value.trim(),
+    };
 
       if (!dados.titulo || !dados.conteudo) {
         document.getElementById('msgModal').textContent = 'Título e conteúdo são obrigatórios.';
@@ -383,11 +417,16 @@
 
     /* ── Logout ───────────────────────────────── */
     document.getElementById('btnLogout').addEventListener('click', () => {
-      window.location.href = 'index.html';
+      sessionStorage.clear(); // ← era só redirect
+      window.location.href = 'View.html';
     });
 
     /* ── Init ─────────────────────────────────── */
-    carregarPrompts();
+    async function init() {
+      await carregarCategorias();
+      await carregarPrompts();
+    }
+    init();
   </script>
 </body>
 </html>
