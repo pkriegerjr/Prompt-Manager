@@ -1,0 +1,23 @@
+# Java
+*.class
+*.log
+
+# Build
+/build/
+/out/
+/target/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Variáveis ambiente
+.env
+
+# Temporários
+/tmp/
