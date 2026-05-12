@@ -9,17 +9,6 @@ import java.util.concurrent.*;
 import javax.mail.*;
 import javax.mail.internet.*;
 
-// ══════════════════════════════════════════════════════════════
-//  ARS PROMPT — Servidor com verificação por link (Resend API)
-//
-//  Compile: javac -cp ".;mysql-connector-j-9.7.0.jar" App.java EmailException.java SenhaException.java
-//  Rode:    java  -cp ".;mysql-connector-j-9.7.0.jar" App
-//
-//  SETUP RESEND (grátis, 3000 emails/mês):
-//  1. Crie conta em resend.com
-//  2. Gere uma API Key
-//  3. Cole em RESEND_KEY abaixo
-// ══════════════════════════════════════════════════════════════
 public class App {
 
     // ── Banco ────────────────────────────────────────────────
