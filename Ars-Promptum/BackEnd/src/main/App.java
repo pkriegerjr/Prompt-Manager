@@ -46,6 +46,7 @@ public class App {
             db();
             System.out.println("[DB] Banco ars_database conectado!");
             migrarSenhas();
+            migrarSchema();
         } catch (SQLException e) {
             System.err.println("[ERRO] Nao foi possivel conectar ao banco: " + e.getMessage());
             System.err.println(">>> Verifique se o MySQL do XAMPP esta rodando.");
@@ -677,10 +678,18 @@ public class App {
         }catch(Exception e){System.err.println("[LOG] "+e.getMessage());}
     }
     static int categoriaId(String body) throws SQLException {
-        int id=parseIntOrDefault(jor(body,"categoriaId","0"),0);
-        if(id>0)return id;
+        int id=parseIntOrDefault(jstr(body,"categoriaId"),0);
+        if(id<=0)id=parseIntOrDefault(jnum(body,"categoriaId"),0);
+        if(id<=0)id=parseIntOrDefault(jstr(body,"categoria").trim(),0);
+        if(id<=0)id=parseIntOrDefault(jnum(body,"categoria"),0);
+        if(id>0)return categoriaExiste(id)?id:0;
         String nome=jstr(body,"categoria").trim();
-        return nome.isEmpty()?0:buscarOuCriarCategoria(nome);
+        return(nome.isEmpty()||"0".equals(nome))?0:buscarOuCriarCategoria(nome);
+    }
+    static boolean categoriaExiste(int id) throws SQLException {
+        try(PreparedStatement ps=db().prepareStatement("SELECT 1 FROM categorias WHERE id=?")){
+            ps.setInt(1,id);ResultSet rs=ps.executeQuery();return rs.next();
+        }
     }
     static int buscarOuCriarCategoria(String nome) throws SQLException {
         try(PreparedStatement ps=db().prepareStatement("SELECT id FROM categorias WHERE nome=?")){
@@ -770,5 +779,23 @@ public class App {
             }
             if(m>0)System.out.println("[DB] "+m+" senha(s) migrada(s) para SHA-256.");
         }catch(Exception e){System.err.println("[AVISO] Erro na migracao: "+e.getMessage());}
+    }
+    static void migrarSchema(){
+        try{garantirColuna("prompts","descricao","VARCHAR(255) NULL","conteudo");}
+        catch(Exception e){System.err.println("[AVISO] Erro na migracao do schema: "+e.getMessage());}
+    }
+    static void garantirColuna(String tabela,String coluna,String definicao,String depoisDe) throws SQLException {
+        if(colunaExiste(tabela,coluna))return;
+        try(Statement st=db().createStatement()){
+            st.executeUpdate("ALTER TABLE "+tabela+" ADD COLUMN "+coluna+" "+definicao+" AFTER "+depoisDe);
+        }
+        System.out.println("[DB] Coluna adicionada: "+tabela+"."+coluna);
+    }
+    static boolean colunaExiste(String tabela,String coluna) throws SQLException {
+        try(PreparedStatement ps=db().prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?")){
+            ps.setString(1,tabela);ps.setString(2,coluna);
+            ResultSet rs=ps.executeQuery();return rs.next()&&rs.getInt(1)>0;
+        }
     }
 }
