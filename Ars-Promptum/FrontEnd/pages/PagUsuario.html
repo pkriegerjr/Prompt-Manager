@@ -113,9 +113,16 @@
 
           <div class="mb-3">
             <label class="form-label"><i class="bi bi-tag me-1"></i>Categoria</label>
-            <input type="text" id="promptCategoria" class="form-control dark-input" placeholder="Ex: Escrita, Código, Marketing...">
+            <!-- substitua o select atual por isto: -->
+            <div style="position:relative;">
+              <i class="bi bi-tag" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none;"></i>
+              <select id="promptCategoria" class="form-control dark-input" style="padding-left:32px; padding-right:32px; appearance:none; cursor:pointer;">
+                <option value="0">Sem categoria</option>
+              </select>
+              <i class="bi bi-chevron-down" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none;"></i>
+            </div>
           </div>
-
+          
           <div class="mb-3">
             <label class="form-label"><i class="bi bi-chat-left-text me-1"></i>Conteúdo do Prompt</label>
             <textarea id="promptConteudo" class="form-control dark-input" rows="6"
