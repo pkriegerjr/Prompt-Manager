@@ -1,0 +1,15 @@
+*.class
+*.log
+*.tmp
+
+BackEnd/build/
+BackEnd/out/
+BackEnd/scripts/out/
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+config.properties
+.env
