@@ -565,3 +565,15 @@ textarea.dark-input { resize: vertical; min-height: 120px; }
   .category-select { min-width: unset; width: 100%; }
   .modal-footer-dark { justify-content: flex-end; }
 }
+
+/* ── Customizações específicas para inputs do modal(foco visível) ─────────── */
+.dark-input:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+select.dark-input {
+  appearance: none;
+  cursor: pointer;
+}
