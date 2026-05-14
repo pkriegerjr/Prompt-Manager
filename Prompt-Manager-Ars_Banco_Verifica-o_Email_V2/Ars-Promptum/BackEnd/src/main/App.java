@@ -22,18 +22,36 @@ import javax.mail.internet.*;
 // ══════════════════════════════════════════════════════════════
 public class App {
 
-    // ── Banco ────────────────────────────────────────────────
-    static final String DB_URL  = "jdbc:mysql://localhost:3306/ars_database?useSSL=false&serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8";
-    static final String DB_USER = "root";
-    static final String DB_PASS = "";
+    // ── Credenciais — lidas do arquivo config.env ────────────
+    // Nunca commite config.env no GitHub! Adicione ao .gitignore
+    static final String DB_URL;
+    static final String DB_USER;
+    static final String DB_PASS;
+    static final String SMTP_HOST;
+    static final int    SMTP_PORT;
+    static final String SMTP_USER;
+    static final String SMTP_PASS;
+    static final String BASE_URL;
     static Connection conn;
 
-    // ── Email SMTP (Gmail) ───────────────────────────────────
-    static final String SMTP_HOST = "smtp.gmail.com";
-    static final int    SMTP_PORT = 587;
-    static final String SMTP_USER = "wallysonsbarbosa@gmail.com";  // ← seu Gmail
-    static final String SMTP_PASS = "cxmx kpyw urzm wtcd";  // ← App Password
-    static final String BASE_URL    = "http://localhost:8080/Ars-Promptum/BackEnd/src/Home%20Page";
+    static {
+        Properties env = new Properties();
+        try (FileInputStream fis = new FileInputStream("config.env")) {
+            env.load(fis);
+        } catch (IOException e) {
+            System.err.println("[ERRO] Arquivo config.env nao encontrado na pasta CRUD!");
+            System.err.println("       Crie o config.env com as credenciais. Veja config.env.example");
+            System.exit(1);
+        }
+        DB_URL    = env.getProperty("DB_URL",    "jdbc:mysql://localhost:3306/ars_database?useSSL=false&serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8");
+        DB_USER   = env.getProperty("DB_USER",   "root");
+        DB_PASS   = env.getProperty("DB_PASS",   "");
+        SMTP_HOST = env.getProperty("SMTP_HOST", "smtp.gmail.com");
+        SMTP_PORT = Integer.parseInt(env.getProperty("SMTP_PORT", "587"));
+        SMTP_USER = env.getProperty("SMTP_USER", "");
+        SMTP_PASS = env.getProperty("SMTP_PASS", "");
+        BASE_URL  = env.getProperty("BASE_URL",  "http://localhost:8080/Ars-Promptum/BackEnd/src/Home%20Page");
+    }
 
     // ── Conexão banco ────────────────────────────────────────
     static Connection db() throws SQLException {

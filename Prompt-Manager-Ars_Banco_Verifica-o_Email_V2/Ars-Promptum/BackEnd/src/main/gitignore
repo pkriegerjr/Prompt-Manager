@@ -1,0 +1,21 @@
+# ============================================================
+#  ARS PROMPT — .gitignore
+# ============================================================
+
+# Credenciais — NUNCA enviar ao GitHub
+config.env
+
+# Arquivos compilados Java
+*.class
+
+# Jars externos (baixar manualmente)
+*.jar
+
+# Arquivos do sistema
+Thumbs.db
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.iml
