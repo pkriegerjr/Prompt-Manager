@@ -10,18 +10,10 @@ if not exist out mkdir out
 
 :: Compila todos os arquivos Java
 echo [1/2] Compilando...
-javac -encoding UTF-8 -cp "lib/*" -d out ^
-  src/CRUD/EmailException.java ^
-  src/CRUD/SenhaException.java ^
-  src/CRUD/model/Usuario.java ^
-  src/CRUD/model/Prompt.java ^
-  src/CRUD/model/Categoria.java ^
-  src/CRUD/DatabaseConnection.java ^
-  src/CRUD/dao/UsuarioDAO.java ^
-  src/CRUD/dao/PromptDAO.java ^
-  src/CRUD/dao/CategoriaDAO.java ^
-  src/CRUD/dao/LogDAO.java ^
-  src/CRUD/App.java
+javac -encoding UTF-8 -cp "libs/*" -d out ^
+  src/main/App.java ^
+  src/main/EmailException.java ^
+  src/main/SenhaException.java
 
 if %errorlevel% neq 0 (
   echo.
