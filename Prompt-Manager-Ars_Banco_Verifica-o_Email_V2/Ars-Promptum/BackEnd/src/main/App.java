@@ -10,15 +10,11 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 // ══════════════════════════════════════════════════════════════
-//  ARS PROMPT — Servidor com verificação por link (Resend API)
+//  ARS PROMPT — Servidor com verificação por link (Google API)
 //
 //  Compile: javac -cp ".;mysql-connector-j-9.7.0.jar" App.java EmailException.java SenhaException.java
 //  Rode:    java  -cp ".;mysql-connector-j-9.7.0.jar" App
 //
-//  SETUP RESEND (grátis, 3000 emails/mês):
-//  1. Crie conta em resend.com
-//  2. Gere uma API Key
-//  3. Cole em RESEND_KEY abaixo
 // ══════════════════════════════════════════════════════════════
 public class App {
 
@@ -372,7 +368,7 @@ public class App {
     }
 
     // ════════════════════════════════════════════════════════
-    //  ENVIO DE EMAIL via Resend API (sem .jar extra)
+    //  ENVIO DE EMAIL via API (sem .jar extra)
     // ════════════════════════════════════════════════════════
     static void enviarLinkVerificacao(String destino, String nome, String token, boolean isAdmin) {
         try {
@@ -490,30 +486,47 @@ public class App {
     static void handlePrompts(HttpExchange ex) throws Exception {
         String method=ex.getRequestMethod().toUpperCase(),path=ex.getRequestURI().getPath(),query=ex.getRequestURI().getQuery();
         if("GET".equals(method)){
-            int uid=qint(query,"uid"); StringBuilder sb=new StringBuilder("[");
-            try(PreparedStatement ps=db().prepareStatement("SELECT * FROM prompts WHERE usuario_id=? ORDER BY criado_em DESC")){
+            int id=pathId(path);
+            if(id>0){
+                try(PreparedStatement ps=db().prepareStatement(
+                        "SELECT p.*, c.nome AS categoria FROM prompts p LEFT JOIN categorias c ON p.categoria_id=c.id WHERE p.id=?")){
+                    ps.setInt(1,id);ResultSet rs=ps.executeQuery();
+                    if(!rs.next()){respText(ex,404,"Prompt nao encontrado.");return;}
+                    respJson(ex,200,promptJson(rs));return;
+                }
+            }
+            int uid=qint(query,"uid");
+            if(uid<=0){respText(ex,400,"Usuario invalido.");return;}
+            StringBuilder sb=new StringBuilder("[");
+            try(PreparedStatement ps=db().prepareStatement(
+                    "SELECT p.*, c.nome AS categoria FROM prompts p LEFT JOIN categorias c ON p.categoria_id=c.id WHERE p.usuario_id=? ORDER BY p.criado_em DESC")){
                 ps.setInt(1,uid);ResultSet rs=ps.executeQuery();boolean first=true;
                 while(rs.next()){if(!first)sb.append(",");first=false;sb.append(promptJson(rs));}
             } respJson(ex,200,sb.append("]").toString());return;
         }
         String body=body(ex);
         if("POST".equals(method)){
-            int uid=Integer.parseInt(jstr(body,"usuarioId")),catId=Integer.parseInt(jor(body,"categoriaId","0"));
-            try(PreparedStatement ps=db().prepareStatement("INSERT INTO prompts (usuario_id,categoria_id,titulo,conteudo) VALUES (?,?,?,?)")){
+            int uid=parseIntOrDefault(jstr(body,"usuarioId"),0),catId=categoriaId(body);
+            if(uid<=0){respText(ex,400,"Usuario invalido.");return;}
+            if(jstr(body,"titulo").isBlank()||jstr(body,"conteudo").isBlank()){respText(ex,400,"Titulo e conteudo sao obrigatorios.");return;}
+            try(PreparedStatement ps=db().prepareStatement("INSERT INTO prompts (usuario_id,categoria_id,titulo,conteudo,descricao) VALUES (?,?,?,?,?)")){
                 ps.setInt(1,uid);if(catId>0)ps.setInt(2,catId);else ps.setNull(2,Types.INTEGER);
-                ps.setString(3,jstr(body,"titulo"));ps.setString(4,jstr(body,"conteudo"));ps.executeUpdate();
+                ps.setString(3,jstr(body,"titulo"));ps.setString(4,jstr(body,"conteudo"));ps.setString(5,jor(body,"descricao",""));ps.executeUpdate();
             } log(uid,"CRIAR_PROMPT","Titulo: "+jstr(body,"titulo"));respText(ex,200,"Prompt criado com sucesso!");return;
         }
         int id=pathId(path);
+        if(id<=0){respText(ex,400,"ID invalido.");return;}
         if("PUT".equals(method)){
-            try(PreparedStatement ps=db().prepareStatement("UPDATE prompts SET titulo=?,conteudo=?,categoria_id=? WHERE id=?")){
+            if(jstr(body,"titulo").isBlank()||jstr(body,"conteudo").isBlank()){respText(ex,400,"Titulo e conteudo sao obrigatorios.");return;}
+            try(PreparedStatement ps=db().prepareStatement("UPDATE prompts SET titulo=?,conteudo=?,categoria_id=?,descricao=? WHERE id=?")){
                 ps.setString(1,jstr(body,"titulo"));ps.setString(2,jstr(body,"conteudo"));
-                int cat=Integer.parseInt(jor(body,"categoriaId","0"));if(cat>0)ps.setInt(3,cat);else ps.setNull(3,Types.INTEGER);
-                ps.setInt(4,id);ps.executeUpdate();
+                int cat=categoriaId(body);if(cat>0)ps.setInt(3,cat);else ps.setNull(3,Types.INTEGER);
+                ps.setString(4,jor(body,"descricao",""));
+                ps.setInt(5,id);if(ps.executeUpdate()==0){respText(ex,404,"Prompt nao encontrado.");return;}
             } log(0,"EDITAR_PROMPT","ID: "+id);respText(ex,200,"Prompt atualizado!");return;
         }
         if("DELETE".equals(method)){
-            try(PreparedStatement ps=db().prepareStatement("DELETE FROM prompts WHERE id=?")){ps.setInt(1,id);ps.executeUpdate();}
+            try(PreparedStatement ps=db().prepareStatement("DELETE FROM prompts WHERE id=?")){ps.setInt(1,id);if(ps.executeUpdate()==0){respText(ex,404,"Prompt nao encontrado.");return;}}
             log(0,"DELETAR_PROMPT","ID: "+id);respText(ex,200,"Prompt deletado.");return;
         }
         respText(ex,405,"Metodo nao permitido");
