@@ -4,7 +4,7 @@ Aplicacao local em Java para cadastro, login, verificacao de e-mail e gerenciame
 
 ## Estrutura Atual
 
-=====================text==========================
+
 BackEnd/
   src/main/           Codigo Java do servidor HTTP
   database/           Schema atual e migracoes
@@ -17,7 +17,7 @@ FrontEnd/
 
 config.env.example    Modelo seguro de configuracao local
 config.env            Configuracao local real, ignorada pelo Git
-=================================================================
+
 
 ## Configuracao Local
 
