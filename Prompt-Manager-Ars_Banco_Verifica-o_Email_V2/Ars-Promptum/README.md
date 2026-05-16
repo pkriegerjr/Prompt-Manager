@@ -6,6 +6,7 @@ Aplicacao local em Java para cadastro, login, verificacao de e-mail e gerenciame
 
 
 BackEnd/
+
   src/main/           Codigo Java do servidor HTTP
   
   database/           Schema atual e migracoes
@@ -15,10 +16,13 @@ BackEnd/
   scripts/            Scripts para compilar e executar
 
 FrontEnd/
+
   pages/              Telas HTML
+  
   assets/css/         Estilos das telas
 
 config.env.example    Modelo seguro de configuracao local
+
 config.env            Configuracao local real, ignorada pelo Git
 
 
