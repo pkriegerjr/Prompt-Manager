@@ -7,8 +7,11 @@ Aplicacao local em Java para cadastro, login, verificacao de e-mail e gerenciame
 
 BackEnd/
   src/main/           Codigo Java do servidor HTTP
+  
   database/           Schema atual e migracoes
+  
   libs/               Dependencias JDBC e JavaMail
+  
   scripts/            Scripts para compilar e executar
 
 FrontEnd/
