@@ -9,44 +9,49 @@ import java.util.concurrent.*;
 import javax.mail.*;
 import javax.mail.internet.*;
 
-// ══════════════════════════════════════════════════════════════
-//  ARS PROMPT — Servidor com verificação por link (Google API)
-//
-//  Compile: javac -cp ".;mysql-connector-j-9.7.0.jar" App.java EmailException.java SenhaException.java
-//  Rode:    java  -cp ".;mysql-connector-j-9.7.0.jar" App
-//
-// ══════════════════════════════════════════════════════════════
 public class App {
 
-    // ── Credenciais — lidas do arquivo config.env ────────────
-    // Nunca commite config.env no GitHub! Adicione ao .gitignore
-    static final String DB_URL;
-    static final String DB_USER;
-    static final String DB_PASS;
-    static final String SMTP_HOST;
-    static final int    SMTP_PORT;
-    static final String SMTP_USER;
-    static final String SMTP_PASS;
-    static final String BASE_URL;
+    // ── Banco ────────────────────────────────────────────────
+    static final Properties CONFIG = carregarConfig();
+    static final String DB_URL  = cfg("DB_URL", "jdbc:mysql://localhost:3306/ars_database?useSSL=false&serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8");
+    static final String DB_USER = cfg("DB_USER", "root");
+    static final String DB_PASS = cfg("DB_PASS", "");
     static Connection conn;
 
-    static {
-        Properties env = new Properties();
-        try (FileInputStream fis = new FileInputStream("config.env")) {
-            env.load(fis);
-        } catch (IOException e) {
-            System.err.println("[ERRO] Arquivo config.env nao encontrado na pasta CRUD!");
-            System.err.println("       Crie o config.env com as credenciais. Veja config.env.example");
-            System.exit(1);
+    // ── Email SMTP (Gmail) ───────────────────────────────────
+    static final String SMTP_HOST = cfg("SMTP_HOST", "smtp.gmail.com");
+    static final int    SMTP_PORT = cfgInt("SMTP_PORT", 587);
+    static final String SMTP_USER = cfg("SMTP_USER", "");
+    static final String SMTP_PASS = cfg("SMTP_PASS", "");
+    static final String BASE_URL  = cfg("BASE_URL", "http://localhost:8080/Ars-Promptum/FrontEnd/pages");
+
+    static Properties carregarConfig() {
+        Properties props = new Properties();
+        String[] caminhos = {"config.env", "../config.env", "../../config.env"};
+        for (String caminho : caminhos) {
+            File arquivo = new File(caminho);
+            if (!arquivo.isFile()) continue;
+            try (FileInputStream in = new FileInputStream(arquivo)) {
+                props.load(in);
+                System.out.println("[CONFIG] Usando configuracao local: " + arquivo.getPath());
+            } catch (IOException e) {
+                System.err.println("[CONFIG] Nao foi possivel ler " + arquivo.getPath() + ": " + e.getMessage());
+            }
+            break;
         }
-        DB_URL    = env.getProperty("DB_URL",    "jdbc:mysql://localhost:3306/ars_database?useSSL=false&serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8");
-        DB_USER   = env.getProperty("DB_USER",   "root");
-        DB_PASS   = env.getProperty("DB_PASS",   "");
-        SMTP_HOST = env.getProperty("SMTP_HOST", "smtp.gmail.com");
-        SMTP_PORT = Integer.parseInt(env.getProperty("SMTP_PORT", "587"));
-        SMTP_USER = env.getProperty("SMTP_USER", "");
-        SMTP_PASS = env.getProperty("SMTP_PASS", "");
-        BASE_URL  = env.getProperty("BASE_URL",  "http://localhost:8080/Ars-Promptum/BackEnd/src/Home%20Page");
+        return props;
+    }
+
+    static String cfg(String chave, String padrao) {
+        String ambiente = System.getenv(chave);
+        if (ambiente != null && !ambiente.isBlank()) return ambiente.trim();
+        String arquivo = CONFIG.getProperty(chave);
+        return (arquivo == null || arquivo.isBlank()) ? padrao : arquivo.trim();
+    }
+
+    static int cfgInt(String chave, int padrao) {
+        try { return Integer.parseInt(cfg(chave, String.valueOf(padrao))); }
+        catch (NumberFormatException e) { return padrao; }
     }
 
     // ── Conexão banco ────────────────────────────────────────
@@ -71,6 +76,7 @@ public class App {
             db();
             System.out.println("[DB] Banco ars_database conectado!");
             migrarSenhas();
+            migrarSchema();
         } catch (SQLException e) {
             System.err.println("[ERRO] Nao foi possivel conectar ao banco: " + e.getMessage());
             System.err.println(">>> Verifique se o MySQL do XAMPP esta rodando.");
@@ -189,7 +195,7 @@ public class App {
     // ── Página HTML de resultado da verificação ──────────────
     static String paginaResultado(String titulo, String msg, boolean sucesso) {
         String cor    = sucesso ? "#3fb950" : "#f85149";
-        String btnUrl = "http://localhost:8080/Ars-Promptum/BackEnd/src/Home%20Page/View.html";
+        String btnUrl = BASE_URL + "/View.html";
         return "<!DOCTYPE html><html lang='pt-br'><head><meta charset='UTF-8'>" +
             "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
             "<title>Ars Prompt — Verificação</title>" +
@@ -636,7 +642,7 @@ public class App {
         String method=ex.getRequestMethod().toUpperCase(),path=ex.getRequestURI().getPath();
         if("GET".equals(method)){
             StringBuilder sb=new StringBuilder("[");
-            try(PreparedStatement ps=db().prepareStatement("SELECT p.*,u.username FROM prompts p JOIN usuarios u ON p.usuario_id=u.id ORDER BY p.criado_em DESC");ResultSet rs=ps.executeQuery()){
+            try(PreparedStatement ps=db().prepareStatement("SELECT p.*,u.username,c.nome AS categoria FROM prompts p JOIN usuarios u ON p.usuario_id=u.id LEFT JOIN categorias c ON p.categoria_id=c.id ORDER BY p.criado_em DESC");ResultSet rs=ps.executeQuery()){
                 boolean first=true;while(rs.next()){if(!first)sb.append(",");first=false;sb.append(promptJson(rs));}
             } respJson(ex,200,sb.append("]").toString());return;
         }
@@ -701,10 +707,43 @@ public class App {
             ps.setInt(1,adminId);ps.setString(2,acao);ps.setString(3,det);ps.executeUpdate();
         }catch(Exception e){System.err.println("[LOG] "+e.getMessage());}
     }
+    static int categoriaId(String body) throws SQLException {
+        int id=parseIntOrDefault(jstr(body,"categoriaId"),0);
+        if(id<=0)id=parseIntOrDefault(jnum(body,"categoriaId"),0);
+        if(id<=0)id=parseIntOrDefault(jstr(body,"categoria").trim(),0);
+        if(id<=0)id=parseIntOrDefault(jnum(body,"categoria"),0);
+        if(id>0)return categoriaExiste(id)?id:0;
+        String nome=jstr(body,"categoria").trim();
+        return(nome.isEmpty()||"0".equals(nome))?0:buscarOuCriarCategoria(nome);
+    }
+    static boolean categoriaExiste(int id) throws SQLException {
+        try(PreparedStatement ps=db().prepareStatement("SELECT 1 FROM categorias WHERE id=?")){
+            ps.setInt(1,id);ResultSet rs=ps.executeQuery();return rs.next();
+        }
+    }
+    static int buscarOuCriarCategoria(String nome) throws SQLException {
+        try(PreparedStatement ps=db().prepareStatement("SELECT id FROM categorias WHERE nome=?")){
+            ps.setString(1,nome);ResultSet rs=ps.executeQuery();if(rs.next())return rs.getInt("id");
+        }
+        try(PreparedStatement ps=db().prepareStatement("INSERT INTO categorias (nome,descricao) VALUES (?,?)",Statement.RETURN_GENERATED_KEYS)){
+            ps.setString(1,nome);ps.setString(2,"Criada automaticamente pelo usuario");ps.executeUpdate();
+            ResultSet keys=ps.getGeneratedKeys();if(keys.next())return keys.getInt(1);
+        }catch(SQLIntegrityConstraintViolationException ignored){
+            try(PreparedStatement ps=db().prepareStatement("SELECT id FROM categorias WHERE nome=?")){
+                ps.setString(1,nome);ResultSet rs=ps.executeQuery();if(rs.next())return rs.getInt("id");
+            }
+        }
+        return 0;
+    }
+    static String rsString(ResultSet rs,String col){
+        try{return rs.getString(col);}catch(SQLException e){return "";}
+    }
     static String promptJson(ResultSet rs) throws SQLException {
-        return String.format("{\"id\":%d,\"usuarioId\":%d,\"categoriaId\":%d,\"titulo\":\"%s\",\"conteudo\":\"%s\",\"criadoEm\":\"%s\",\"atualizadoEm\":\"%s\"}",
+        return String.format("{\"id\":%d,\"usuarioId\":%d,\"categoriaId\":%d,\"categoria\":\"%s\",\"titulo\":\"%s\",\"conteudo\":\"%s\",\"descricao\":\"%s\",\"criadoEm\":\"%s\",\"atualizadoEm\":\"%s\"}",
             rs.getInt("id"),rs.getInt("usuario_id"),rs.getInt("categoria_id"),
+            esc(rsString(rs,"categoria")),
             esc(rs.getString("titulo")),esc(rs.getString("conteudo")),
+            esc(rsString(rs,"descricao")),
             esc(rs.getString("criado_em")),esc(rs.getString("atualizado_em")));
     }
     static void cors(HttpExchange ex){
@@ -749,6 +788,7 @@ public class App {
         } catch(Exception e) { return ""; }
     }
     static String jor(String body,String campo,String def){String v=jstr(body,campo);return(v==null||v.isEmpty())?def:v;}
+    static int parseIntOrDefault(String v,int def){try{return Integer.parseInt(v);}catch(Exception e){return def;}}
     static int pathId(String path){String[]p=path.split("/");for(int i=p.length-1;i>=0;i--){try{return Integer.parseInt(p[i]);}catch(NumberFormatException ignored){}}return -1;}
     static int qint(String q,String p){if(q==null)return 0;for(String par:q.split("&")){String[]kv=par.split("=");if(kv.length==2&&kv[0].equals(p)){try{return Integer.parseInt(kv[1]);}catch(Exception e){return 0;}}}return 0;}
     static String qstr(String q,String p){if(q==null)return "";for(String par:q.split("&")){String[]kv=par.split("=",2);if(kv.length==2&&kv[0].equals(p))return kv[1];}return "";}
@@ -769,5 +809,23 @@ public class App {
             }
             if(m>0)System.out.println("[DB] "+m+" senha(s) migrada(s) para SHA-256.");
         }catch(Exception e){System.err.println("[AVISO] Erro na migracao: "+e.getMessage());}
+    }
+    static void migrarSchema(){
+        try{garantirColuna("prompts","descricao","VARCHAR(255) NULL","conteudo");}
+        catch(Exception e){System.err.println("[AVISO] Erro na migracao do schema: "+e.getMessage());}
+    }
+    static void garantirColuna(String tabela,String coluna,String definicao,String depoisDe) throws SQLException {
+        if(colunaExiste(tabela,coluna))return;
+        try(Statement st=db().createStatement()){
+            st.executeUpdate("ALTER TABLE "+tabela+" ADD COLUMN "+coluna+" "+definicao+" AFTER "+depoisDe);
+        }
+        System.out.println("[DB] Coluna adicionada: "+tabela+"."+coluna);
+    }
+    static boolean colunaExiste(String tabela,String coluna) throws SQLException {
+        try(PreparedStatement ps=db().prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?")){
+            ps.setString(1,tabela);ps.setString(2,coluna);
+            ResultSet rs=ps.executeQuery();return rs.next()&&rs.getInt(1)>0;
+        }
     }
 }
