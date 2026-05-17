@@ -8,7 +8,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/EsUsuarioPag.css">
+  <link rel="stylesheet" href="../assets/css/EsUsuarioPag.css">
 </head>
 <body>
 
@@ -113,6 +113,7 @@
 
           <div class="mb-3">
             <label class="form-label"><i class="bi bi-tag me-1"></i>Categoria</label>
+            <!-- substitua o select atual por isto: -->
             <div style="position:relative;">
               <i class="bi bi-tag" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6c757d;pointer-events:none;"></i>
               <select id="promptCategoria" class="form-control dark-input" style="padding-left:32px; padding-right:32px; appearance:none; cursor:pointer;">
@@ -183,6 +184,17 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const API = 'http://localhost:8081/api';
+    const usuarioId = sessionStorage.getItem('usuario_id');
+    const usuarioIdNumero = Number(usuarioId);
+    const usuarioNome = sessionStorage.getItem('usuario_nome');
+    let categoriasBanco = [];
+
+    const usuarioSessaoValido = Number.isInteger(usuarioIdNumero) && usuarioIdNumero > 0;
+    if (!usuarioSessaoValido) {
+      sessionStorage.clear();
+      window.location.replace('View.html');
+    }
+    document.getElementById('navUsername').textContent = usuarioNome || 'usuario';
 
     /* ── Utils ────────────────────────────────── */
     function toast(msg, tipo = 'success') {
@@ -196,14 +208,40 @@
       document.getElementById('loader').style.display = visible ? 'flex' : 'none';
     }
 
+    async function carregarCategoriasBanco() {
+      try {
+        const res = await fetch(`${API}/categorias`);
+        if (!res.ok) throw new Error('Erro ao carregar categorias');
+        categoriasBanco = await res.json();
+        populaSelectPromptCategorias();
+        populaCategorias();
+      } catch {
+        toast('Erro ao carregar categorias do banco.', 'error');
+      }
+    }
+
+    function populaSelectPromptCategorias() {
+      const sel = document.getElementById('promptCategoria');
+      const cur = sel.value || '0';
+      sel.innerHTML = '<option value="0">Sem categoria</option>';
+      categoriasBanco.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.nome;
+        if (String(c.id) === String(cur)) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+
     /* ── Carregar prompts ──────────────────────── */
     async function carregarPrompts() {
+      if (!usuarioSessaoValido) return;
       setLoader(true);
       document.getElementById('promptGrid').innerHTML = '';
       document.getElementById('emptyState').classList.add('d-none');
 
       try {
-        const res  = await fetch(`${API}/prompts`);
+        const res  = await fetch(`${API}/prompts?uid=${encodeURIComponent(usuarioIdNumero)}`);
         const data = await res.json();
         renderGrid(data);
         populaCategorias(data);
@@ -260,9 +298,11 @@
       });
     }
 
-    function populaCategorias(prompts) {
+    function populaCategorias(prompts = []) {
       const sel  = document.getElementById('selectCategoria');
-      const cats = [...new Set(prompts.map(p => p.categoria).filter(Boolean))];
+      const cats = categoriasBanco.length
+        ? categoriasBanco.map(c => c.nome).filter(Boolean)
+        : [...new Set(prompts.map(p => p.categoria).filter(Boolean))];
       const cur  = sel.value;
       sel.innerHTML = '<option value="">Todas as categorias</option>';
       cats.forEach(c => {
@@ -292,7 +332,8 @@
       document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-square me-2"></i>Novo Prompt';
       document.getElementById('promptId').value       = '';
       document.getElementById('promptTitulo').value   = '';
-      document.getElementById('promptCategoria').value= '';
+      populaSelectPromptCategorias();
+      document.getElementById('promptCategoria').value= '0';
       document.getElementById('promptConteudo').value = '';
       document.getElementById('promptDescricao').value= '';
       document.getElementById('msgModal').textContent = '';
@@ -305,7 +346,8 @@
         document.getElementById('modalTitle').innerHTML   = '<i class="bi bi-pencil-square me-2"></i>Editar Prompt';
         document.getElementById('promptId').value         = p.id;
         document.getElementById('promptTitulo').value     = p.titulo    || '';
-        document.getElementById('promptCategoria').value  = p.categoria || '';
+        populaSelectPromptCategorias();
+        document.getElementById('promptCategoria').value  = p.categoriaId || '0';
         document.getElementById('promptConteudo').value   = p.conteudo  || '';
         document.getElementById('promptDescricao').value  = p.descricao || '';
         document.getElementById('msgModal').textContent   = '';
@@ -316,12 +358,18 @@
     }
 
     document.getElementById('btnSalvar').addEventListener('click', async () => {
+      if (!usuarioSessaoValido) {
+        window.location.replace('View.html');
+        return;
+      }
+
       const id    = document.getElementById('promptId').value;
       const dados = {
         titulo:    document.getElementById('promptTitulo').value.trim(),
-        categoria: document.getElementById('promptCategoria').value.trim(),
+        categoriaId: Number(document.getElementById('promptCategoria').value || 0),
         conteudo:  document.getElementById('promptConteudo').value.trim(),
         descricao: document.getElementById('promptDescricao').value.trim(),
+        usuarioId: usuarioIdNumero,
       };
 
       if (!dados.titulo || !dados.conteudo) {
@@ -389,11 +437,12 @@
 
     /* ── Logout ───────────────────────────────── */
     document.getElementById('btnLogout').addEventListener('click', () => {
+      sessionStorage.clear();
       window.location.href = 'index.html';
     });
 
     /* ── Init ─────────────────────────────────── */
-    carregarPrompts();
+    if (usuarioSessaoValido) carregarCategoriasBanco().finally(carregarPrompts);
   </script>
 </body>
 </html>

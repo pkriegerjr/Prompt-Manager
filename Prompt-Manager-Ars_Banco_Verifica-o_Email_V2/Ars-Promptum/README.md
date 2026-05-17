@@ -4,27 +4,26 @@ Aplicacao local em Java para cadastro, login, verificacao de e-mail e gerenciame
 
 ## Estrutura Atual
 
-
+```text
 BackEnd/
-
   src/main/           Codigo Java do servidor HTTP
-  
+    config/           Configuracao local e variaveis de ambiente
+    controller/       Handlers HTTP por area funcional
+    dao/              Acesso a dados e conexao com o banco
+    model/            Entidades de dominio
+    service/          Servicos de negocio e integracoes externas
+    util/             Utilitarios HTTP, JSON e seguranca
   database/           Schema atual e migracoes
-  
   libs/               Dependencias JDBC e JavaMail
-  
   scripts/            Scripts para compilar e executar
 
 FrontEnd/
-
   pages/              Telas HTML
-  
   assets/css/         Estilos das telas
 
 config.env.example    Modelo seguro de configuracao local
-
 config.env            Configuracao local real, ignorada pelo Git
-
+```
 
 ## Configuracao Local
 
@@ -46,6 +45,6 @@ O backend sobe em `http://localhost:8081`.
 
 ## Observacoes Tecnicas
 
-- O projeto ainda concentra muitas responsabilidades em `App.java`.
-- A proxima etapa recomendada e separar o backend em camadas `model`, `repository/dao`, `service`, `controller`, `routes`, `config` e `util`.
+- O `App.java` agora e o ponto de entrada e roteamento HTTP.
+- As responsabilidades principais foram separadas em `controller`, `dao`, `model`, `service`, `config` e `util`.
 - Credenciais de banco e SMTP agora devem ficar em `config.env` ou variaveis de ambiente, nunca no codigo.
