@@ -27,15 +27,15 @@ public final class PromptController {
             }
 
             int uid = JsonUtil.queryInt(query, "uid");
-            if (uid <= 0) { HttpUtil.text(ex,400,"Usuario invalido."); return; }
+            if (uid <= 0) { HttpUtil.text(ex,400,"Usuario invalido. Faca login novamente."); return; }
             HttpUtil.json(ex,200,promptArray(PromptDao.listarPorUsuario(uid))); return;
         }
 
         String body = HttpUtil.body(ex);
         if ("POST".equals(method)) {
-            int uid = JsonUtil.parseIntOrDefault(JsonUtil.str(body,"usuarioId"),0);
+            int uid = usuarioId(body);
             int catId = categoriaId(body);
-            if (uid <= 0) { HttpUtil.text(ex,400,"Usuario invalido."); return; }
+            if (uid <= 0) { HttpUtil.text(ex,400,"Usuario invalido. Faca login novamente."); return; }
             if (JsonUtil.str(body,"titulo").isBlank() || JsonUtil.str(body,"conteudo").isBlank()) {
                 HttpUtil.text(ex,400,"Titulo e conteudo sao obrigatorios."); return;
             }
@@ -73,6 +73,12 @@ public final class PromptController {
             sb.append(JsonViews.prompt(prompt));
         }
         return sb.append("]").toString();
+    }
+
+    static int usuarioId(String body) {
+        int id = JsonUtil.parseIntOrDefault(JsonUtil.str(body,"usuarioId"),0);
+        if (id <= 0) id = JsonUtil.parseIntOrDefault(JsonUtil.num(body,"usuarioId"),0);
+        return id;
     }
 
     static int categoriaId(String body) throws Exception {
