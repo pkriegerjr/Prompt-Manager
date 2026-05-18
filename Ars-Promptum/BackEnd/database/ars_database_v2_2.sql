@@ -145,7 +145,8 @@ CREATE TABLE IF NOT EXISTS historico_logs (
                 'EDITAR_CATEGORIA',
                 'DELETAR_CATEGORIA',
                 'EMAIL_VERIFICADO',
-                'ADMIN_CRIADO'
+                'ADMIN_CRIADO',
+                'ADMIN_REVOGADO'
               )             NOT NULL,
   detalhes    VARCHAR(500)      NULL,   -- ex: "Prompt: Como usar JDBC"
   feito_em    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

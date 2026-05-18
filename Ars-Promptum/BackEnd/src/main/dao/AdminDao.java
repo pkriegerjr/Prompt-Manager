@@ -17,6 +17,13 @@ public final class AdminDao {
         }
     }
 
+    public static boolean removerPorEmail(String email) throws SQLException {
+    try (PreparedStatement ps = Database.getConnection().prepareStatement("DELETE FROM admins WHERE email=?")) {
+            ps.setString(1, email);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public static void criar(String username, String email, String passwordHash)
             throws SQLException, SQLIntegrityConstraintViolationException {
         try (PreparedStatement ps = Database.getConnection().prepareStatement(

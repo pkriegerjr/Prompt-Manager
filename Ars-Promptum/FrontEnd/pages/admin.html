@@ -651,9 +651,14 @@
                    <i class="bi bi-toggle-on"></i>
                  </button>`
             }
-            <button class="tbl-btn" title="Tornar administrador" onclick="tornarAdmin(${u.id},'${esc(u.username)}',this)">
-              <i class="bi bi-shield-plus"></i>
-            </button>
+            ${u.role === 'moderador'
+              ? `<button class="tbl-btn warning" title="Revogar administrador" onclick="revogarAdmin(${u.id},'${esc(u.username)}',this)">
+                  <i class="bi bi-shield-minus"></i>
+                </button>`
+              : `<button class="tbl-btn" title="Tornar administrador" onclick="tornarAdmin(${u.id},'${esc(u.username)}',this)">
+                  <i class="bi bi-shield-plus"></i>
+                </button>`
+            }
             <button class="tbl-btn danger" title="Deletar conta" onclick="deletarUsuario(${u.id},'${esc(u.username)}')">
               <i class="bi bi-trash"></i>
             </button>
@@ -693,17 +698,43 @@
           const msg = await res.text();
           showToast(msg, res.ok ? 'success' : 'error');
           if (res.ok) {
-            // Feedback visual imediato na linha
             const td = btn.closest('tr').querySelector('td:nth-child(4)');
-            if (td) td.innerHTML = '<span class="status-badge badge-admin">Admin</span>';
-            btn.disabled = true;
-            btn.title = 'Já é administrador';
+            if (td) td.innerHTML = '<span class="status-badge badge-ativo">Ativo</span>';
+            // Troca o botão de tornar pelo de revogar
+            btn.outerHTML = `<button class="tbl-btn warning" title="Revogar administrador" onclick="revogarAdmin(${id},'${nome}',this)">
+              <i class="bi bi-shield-minus"></i>
+            </button>`;
           }
         } catch { showToast('Erro ao conectar.', 'error'); }
       }
     );
   }
-
+  // ── Revogar admin ─────────────────────────────────────────
+  async function revogarAdmin(id, nome, btn) {
+    confirmar(
+      'Revogar administrador',
+      `Rebaixar "${nome}" para usuário comum? Ele perderá o acesso ao painel admin.`,
+      async () => {
+        try {
+          const res = await fetch(`${API}/admin/revogar-admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: String(id) })
+          });
+          const msg = await res.text();
+          showToast(msg, res.ok ? 'success' : 'error');
+          if (res.ok) {
+            const td = btn.closest('tr').querySelector('td:nth-child(4)');
+            if (td) td.innerHTML = '<span class="status-badge badge-ativo">Ativo</span>';
+            // Troca o botão de revogar pelo de tornar
+            btn.outerHTML = `<button class="tbl-btn" title="Tornar administrador" onclick="tornarAdmin(${id},'${nome}',this)">
+              <i class="bi bi-shield-plus"></i>
+            </button>`;
+          }
+        } catch { showToast('Erro ao conectar.', 'error'); }
+      }
+    );
+  }
   // ── Deletar usuário ───────────────────────────────────────
   async function deletarUsuario(id, nome) {
     confirmar(

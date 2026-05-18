@@ -129,6 +129,13 @@ public final class UsuarioDao {
             System.err.println("[AVISO] Erro na migracao: " + e.getMessage());
         }
     }
+    public static void setRole(int id, String role) throws SQLException {
+        try (PreparedStatement ps = Database.getConnection().prepareStatement("UPDATE usuarios SET role=? WHERE id=?")) {
+            ps.setString(1, role);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        }
+    }
 
     private static Usuario map(ResultSet rs) throws SQLException {
         return new Usuario(

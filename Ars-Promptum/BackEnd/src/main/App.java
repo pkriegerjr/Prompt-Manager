@@ -38,6 +38,7 @@ public class App {
         server.createContext("/api/admin/stats", ex -> HttpUtil.route(ex, AdminController::stats));
         server.createContext("/api/admin/usuarios", ex -> HttpUtil.route(ex, AdminController::usuarios));
         server.createContext("/api/admin/tornar-admin", ex -> HttpUtil.route(ex, AdminController::tornarAdmin));
+        server.createContext("/api/admin/revogar-admin", ex -> HttpUtil.route(ex, AdminController::revogarAdmin));
         server.createContext("/api/admin/deletar-usuario", ex -> HttpUtil.route(ex, AdminController::deletarUsuario));
         server.createContext("/api/admin/prompts", ex -> HttpUtil.route(ex, AdminController::prompts));
         server.createContext("/api/admin/categorias", ex -> HttpUtil.route(ex, CategoriaController::adminCategorias));

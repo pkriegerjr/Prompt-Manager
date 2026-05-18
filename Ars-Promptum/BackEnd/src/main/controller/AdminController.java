@@ -35,6 +35,12 @@ public final class AdminController {
             HttpUtil.text(ex,400,"Email ou username ja cadastrado."); return;
         }
 
+        // Sincroniza role na tabela usuarios, se existir conta com mesmo email
+        Usuario usuarioExistente = UsuarioDao.buscarPorEmail(email);
+        if (usuarioExistente != null) {
+            UsuarioDao.setRole(usuarioExistente.getId(), "moderador");
+        }
+
         LogDao.registrarAdmin(1,"ADMIN_CRIADO","Novo admin: " + user);
         HttpUtil.text(ex,200,"Administrador \"" + user + "\" criado com sucesso! Ja pode fazer login.");
     }
@@ -82,8 +88,27 @@ public final class AdminController {
             HttpUtil.text(ex,400,"Este usuario ja e administrador."); return;
         }
 
+        UsuarioDao.setRole(id, "moderador");
         LogDao.registrarAdmin(1,"ADMIN_CRIADO","Promovido de usuario ID: " + id);
         HttpUtil.text(ex,200,"Usuario \"" + usuario.getUsername() + "\" promovido a administrador!");
+    }
+
+    public static void revogarAdmin(HttpExchange ex) throws Exception {
+        if (!"POST".equals(ex.getRequestMethod())) { HttpUtil.text(ex,405,"Metodo nao permitido"); return; }
+        String body = HttpUtil.body(ex);
+        String idStr = JsonUtil.str(body,"id");
+        if (idStr.isEmpty()) idStr = JsonUtil.num(body,"id");
+        int id = Integer.parseInt(idStr);
+
+        Usuario usuario = UsuarioDao.buscarPorId(id);
+        if (usuario == null) { HttpUtil.text(ex,404,"Usuario nao encontrado."); return; }
+
+        boolean removido = AdminDao.removerPorEmail(usuario.getEmail());
+        if (!removido) { HttpUtil.text(ex,400,"Este usuario nao e administrador."); return; }
+
+        UsuarioDao.setRole(id, "usuario");
+        LogDao.registrarAdmin(1,"ADMIN_REVOGADO","Privilégios removidos, usuario ID: " + id);
+        HttpUtil.text(ex,200,"Privilegios de \"" + usuario.getUsername() + "\" removidos com sucesso!");
     }
 
     public static void deletarUsuario(HttpExchange ex) throws Exception {
