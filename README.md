@@ -2,7 +2,7 @@
 
 Ars Promptum e uma aplicacao local para cadastro, login, verificacao de e-mail e gerenciamento de prompts por usuario, com painel administrativo para usuarios, prompts, categorias e logs.
 
-O projeto esta em fase de organizacao para boas praticas de Programacao Orientada a Objetos. A versao atual prioriza uma base funcional, segura e simples de executar em ambiente local com Java, MySQL/XAMPP e frontend em HTML, CSS e JavaScript.
+A versao atual usa Maven como fluxo principal do backend. O projeto possui um `pom.xml` pai na raiz `gerenciador_de_prompts` e um modulo Maven executavel em `Ars-Promptum/BackEnd`.
 
 ## Status Atual
 
@@ -16,9 +16,10 @@ Implementado:
 - Categorias carregadas do banco de dados.
 - Gerenciamento administrativo de usuarios, prompts e categorias.
 - Historico de logs para acoes principais.
-- Separacao inicial em `controller`, `dao`, `model`, `service`, `config` e `util`.
+- Separacao em `controller`, `dao`, `model`, `service`, `config` e `util`.
 - Configuracao sensivel via `config.env` ou variaveis de ambiente.
-- Maven Wrapper no backend, com suporte a execucao direta e JAR executavel.
+- Maven Wrapper no backend.
+- JAR executavel gerado pelo Maven Shade Plugin.
 - Projeto Maven pai na raiz para agregar modulos.
 
 Em aberto:
@@ -36,40 +37,43 @@ Fora do escopo da versao atual:
 ## Estrutura
 
 ```text
-BackEnd/
-  pom.xml            Build Maven do backend
-  mvnw, mvnw.cmd     Maven Wrapper
-  .mvn/wrapper/      Configuracao do Maven Wrapper
-  src/main/java/
-    App.java          Entrada da aplicacao e registro das rotas HTTP
-    config/           Leitura de variaveis de ambiente e config.env
-    controller/       Handlers HTTP por area funcional
-    dao/              Acesso ao banco de dados
-    model/            Entidades do dominio
-    service/          Servicos de e-mail e paginas auxiliares
-    util/             Utilitarios HTTP, JSON e seguranca
-  database/           Schema SQL e migracoes
-  scripts/            Scripts para compilar e executar
+gerenciador_de_prompts/
+  pom.xml                         Projeto Maven pai
+  README.md                       Documentacao principal
+  requirements.md                 Requisitos funcionais atuais
+  SPECS.md                        Especificacoes tecnicas atuais
 
-FrontEnd/
-  pages/              Telas HTML
-  assets/css/         Estilos das telas
+  Ars-Promptum/
+    Como Rodar.md                 Guia direto de execucao
+    config.env.example            Modelo de configuracao local
+    config.env                    Configuracao real local, ignorada pelo Git
 
-pom.xml               Projeto Maven pai
-config.env.example    Modelo de configuracao local
-config.env            Configuracao real local, ignorada pelo Git
-requirements.md       Requisitos funcionais atuais
-SPECS.md              Especificacoes tecnicas atuais
+    BackEnd/
+      pom.xml                     Build Maven do backend
+      mvnw, mvnw.cmd              Maven Wrapper
+      .mvn/wrapper/               Configuracao do Maven Wrapper
+      src/main/java/
+        App.java                  Entrada da aplicacao e registro das rotas HTTP
+        config/                   Leitura de variaveis de ambiente e config.env
+        controller/               Handlers HTTP por area funcional
+        dao/                      Acesso ao banco de dados
+        model/                    Entidades do dominio
+        service/                  Servicos de e-mail e paginas auxiliares
+        util/                     Utilitarios HTTP, JSON e seguranca
+      database/                   Schema SQL e migracoes
+      scripts/                    Scripts que usam o Maven Wrapper
+
+    FrontEnd/
+      pages/                      Telas HTML
+      assets/css/                 Estilos das telas
 ```
 
-## Como Rodar
+## Requisitos
 
-1. Inicie o MySQL pelo XAMPP.
-2. Execute `BackEnd/database/ars_database_v2_1.sql` para criar o banco.
-3. Copie `config.env.example` para `config.env`.
-4. Preencha as variaveis de banco, SMTP e `BASE_URL`.
-5. Execute `BackEnd/scripts/rodar.bat` no Windows.
-6. Abra `FrontEnd/pages/index.html` no navegador.
+- JDK instalado e `JAVA_HOME` configurado.
+- MySQL/XAMPP iniciado.
+- Banco criado com `Ars-Promptum/BackEnd/database/ars_database_v2_1.sql`.
+- Arquivo `Ars-Promptum/config.env` criado a partir de `Ars-Promptum/config.env.example`.
 
 O backend sobe em:
 
@@ -77,68 +81,91 @@ O backend sobe em:
 http://localhost:8081
 ```
 
-### Rodando com Maven Wrapper
+## Como Rodar
 
-A migracao para Maven ja usa o layout padrao `BackEnd/src/main/java`. O caminho recomendado e usar o Maven Wrapper versionado no backend:
+### Metodo Recomendado: Maven Wrapper
 
-```text
-cd Ars-Promptum/BackEnd
-mvnw.cmd clean compile exec:java
+No Windows PowerShell:
+
+```powershell
+cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+.\mvnw.cmd clean compile exec:java
 ```
 
 No Linux/macOS:
 
-```text
-cd Ars-Promptum/BackEnd
+```bash
+cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
 ./mvnw clean compile exec:java
 ```
 
-O Maven Wrapper precisa que `JAVA_HOME` esteja configurado para o JDK instalado.
+Esse metodo usa o Maven Wrapper versionado no projeto e nao depende de Maven instalado globalmente.
 
-Ou usar os scripts:
+### Rodar pelo Script
 
-```text
-BackEnd/scripts/rodar.bat
-BackEnd/scripts/rodar.sh
-```
+No Windows PowerShell:
 
-Esses scripts tambem usam o Maven Wrapper.
-
-Tambem e possivel rodar comandos Maven a partir da raiz do projeto:
-
-```text
-mvn -pl Ars-Promptum/BackEnd clean package
-```
-
-Ou todos os modulos Maven:
-
-```text
-mvn clean package
-```
-
-### Gerando e Rodando o JAR
-
-O backend tambem pode ser empacotado como JAR executavel:
-
-```text
-cd Ars-Promptum/BackEnd
-mvnw.cmd clean package
-java -jar target/ars-promptum-backend-1.0.0-SNAPSHOT.jar
+```powershell
+cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+.\scripts\rodar.bat
 ```
 
 No Linux/macOS:
 
-```text
-cd Ars-Promptum/BackEnd
+```bash
+cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
+./scripts/rodar.sh
+```
+
+Os scripts tambem usam o Maven Wrapper.
+
+### Gerar e Rodar o JAR Executavel
+
+No Windows PowerShell:
+
+```powershell
+cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+.\mvnw.cmd clean package
+java -jar target\ars-promptum-backend-1.0.0-SNAPSHOT.jar
+```
+
+No Linux/macOS:
+
+```bash
+cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
 ./mvnw clean package
 java -jar target/ars-promptum-backend-1.0.0-SNAPSHOT.jar
 ```
 
 Execute o JAR a partir da pasta `BackEnd`, para que o `config.env` em `Ars-Promptum/config.env` seja encontrado corretamente.
 
+### Usar o Maven Pai
+
+Na raiz `gerenciador_de_prompts`, existe um `pom.xml` agregador. Com Maven instalado no `PATH`, rode:
+
+```powershell
+cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts
+mvn clean package
+```
+
+Para empacotar apenas o modulo do backend:
+
+```powershell
+cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts
+mvn -pl Ars-Promptum/BackEnd clean package
+```
+
+## Abrir o Frontend
+
+Com o backend rodando, abra no navegador:
+
+```text
+C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\FrontEnd\pages\index.html
+```
+
 ## Configuracao
 
-O arquivo `config.env` deve conter valores reais de ambiente local:
+O arquivo `Ars-Promptum/config.env` deve conter valores reais de ambiente local:
 
 ```text
 DB_URL=jdbc:mysql://localhost:3306/ars_database
@@ -193,7 +220,7 @@ POST /api/admin/criar-admin
 ## Observacoes de Seguranca
 
 - Credenciais ficam fora do codigo fonte.
-- `config.env` deve permanecer no `.gitignore`.
+- `Ars-Promptum/config.env` deve permanecer no `.gitignore`.
 - Senhas sao armazenadas com SHA-256 no estado atual do projeto.
 - Para uso real em producao, o ideal e migrar o armazenamento de senhas para BCrypt.
 
