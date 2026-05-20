@@ -1,0 +1,13 @@
+# Local configuration
+Ars-Promptum/config.env
+
+# Java build outputs
+Ars-Promptum/BackEnd/target/
+Ars-Promptum/BackEnd/out/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
