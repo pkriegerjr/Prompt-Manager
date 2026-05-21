@@ -79,6 +79,44 @@ Prompt-Manager/
 - Banco criado com `Ars-Promptum/BackEnd/database/ars_database_v2_2.sql`.
 - Arquivo `Ars-Promptum/config.env` criado a partir de `Ars-Promptum/config.env.example`.
 
+## Configurar JAVA_HOME no Windows
+
+O Maven Wrapper (`.\mvnw.cmd`), os scripts em `BackEnd/scripts` e a execucao do JAR precisam encontrar um JDK valido. O `JAVA_HOME` deve apontar para a pasta raiz do JDK, nao para a pasta `bin`.
+
+Exemplos de caminho valido:
+
+```text
+C:\Program Files\Java\jdk-17
+C:\Program Files\Java\jdk-21
+```
+
+Para configurar apenas o PowerShell atual:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+echo $env:JAVA_HOME
+java -version
+javac -version
+```
+
+Para deixar permanente no Windows:
+
+1. Abra o menu Iniciar e procure por `Editar as variaveis de ambiente da sua conta`.
+2. Em `Variaveis de usuario`, crie ou edite `JAVA_HOME` com o caminho da pasta do JDK.
+3. Edite a variavel `Path` e adicione `%JAVA_HOME%\bin`.
+4. Feche e reabra o PowerShell ou o VS Code.
+
+Depois de reabrir o terminal, valide:
+
+```powershell
+echo $env:JAVA_HOME
+java -version
+javac -version
+```
+
+Se `JAVA_HOME` estiver vazio ou apontando para uma pasta incorreta, corrija antes de rodar `.\mvnw.cmd`, `.\scripts\rodar.bat` ou `java -jar`.
+
 O backend sobe em:
 
 ```text
