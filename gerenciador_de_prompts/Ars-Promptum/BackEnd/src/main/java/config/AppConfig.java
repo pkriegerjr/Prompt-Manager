@@ -16,7 +16,7 @@ public final class AppConfig {
     public static final int SMTP_PORT = cfgInt("SMTP_PORT", 587);
     public static final String SMTP_USER = cfg("SMTP_USER", "");
     public static final String SMTP_PASS = cfg("SMTP_PASS", "");
-    public static final String BASE_URL = cfg("BASE_URL", "http://localhost:8080/Ars-Promptum/FrontEnd/pages");
+    public static final String BASE_URL = cfg("BASE_URL", "http://localhost:8081/pages");
 
     private AppConfig() {}
 

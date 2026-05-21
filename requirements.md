@@ -50,7 +50,7 @@ Observacao: a exclusao atual remove o registro diretamente. A lixeira com `delet
 
 - O administrador pode visualizar estatisticas gerais.
 - O administrador pode listar usuarios.
-- O administrador pode promover usuario para administrador.
+- O administrador pode promover usuario para administrador e revogar esse acesso.
 - O administrador pode deletar usuarios.
 - O administrador pode listar, editar e deletar prompts.
 - O administrador pode gerenciar categorias.
@@ -68,6 +68,7 @@ Observacao: a exclusao atual remove o registro diretamente. A lixeira com `delet
 - O sistema le configuracoes de variaveis de ambiente ou `config.env`.
 - O arquivo `config.env` e ignorado pelo Git.
 - O arquivo `config.env.example` serve como modelo publico.
+- O backend HTTP roda com Javalin e requer JDK 17 ou superior.
 
 ## Requisitos Planejados
 

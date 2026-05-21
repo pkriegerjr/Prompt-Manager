@@ -17,6 +17,7 @@ Implementado:
 - Gerenciamento administrativo de usuarios, prompts e categorias.
 - Historico de logs para acoes principais.
 - Separacao em `controller`, `dao`, `model`, `service`, `config` e `util`.
+- Backend HTTP com Javalin na porta `8081`.
 - Configuracao sensivel via `config.env` ou variaveis de ambiente.
 - Maven Wrapper no backend.
 - JAR executavel gerado pelo Maven Shade Plugin.
@@ -37,42 +38,45 @@ Fora do escopo da versao atual:
 ## Estrutura
 
 ```text
-gerenciador_de_prompts/
-  pom.xml                         Projeto Maven pai
+Prompt-Manager/
+  .gitignore                      Regras para ignorar configs locais e builds
+  AGENTS.md                       Atores humanos e agentes de sistema
   README.md                       Documentacao principal
   requirements.md                 Requisitos funcionais atuais
-  SPECS.md                        Especificacoes tecnicas atuais
 
-  Ars-Promptum/
-    Como Rodar.md                 Guia direto de execucao
-    config.env.example            Modelo de configuracao local
-    config.env                    Configuracao real local, ignorada pelo Git
+  gerenciador_de_prompts/
+    pom.xml                       Projeto Maven pai
 
-    BackEnd/
-      pom.xml                     Build Maven do backend
-      mvnw, mvnw.cmd              Maven Wrapper
-      .mvn/wrapper/               Configuracao do Maven Wrapper
-      src/main/java/
-        App.java                  Entrada da aplicacao e registro das rotas HTTP
-        config/                   Leitura de variaveis de ambiente e config.env
-        controller/               Handlers HTTP por area funcional
-        dao/                      Acesso ao banco de dados
-        model/                    Entidades do dominio
-        service/                  Servicos de e-mail e paginas auxiliares
-        util/                     Utilitarios HTTP, JSON e seguranca
-      database/                   Schema SQL e migracoes
-      scripts/                    Scripts que usam o Maven Wrapper
+    Ars-Promptum/
+      README.md                   Guia direto de execucao
+      config.env.example          Modelo de configuracao local
+      config.env                  Configuracao real local, ignorada pelo Git
 
-    FrontEnd/
-      pages/                      Telas HTML
-      assets/css/                 Estilos das telas
+      BackEnd/
+        pom.xml                   Build Maven do backend
+        mvnw, mvnw.cmd            Maven Wrapper
+        .mvn/wrapper/             Configuracao do Maven Wrapper
+        src/main/java/
+          App.java                Entrada da aplicacao e registro das rotas HTTP
+          config/                 Leitura de variaveis de ambiente e config.env
+          controller/             Handlers HTTP por area funcional
+          dao/                    Acesso ao banco de dados
+          model/                  Entidades do dominio
+          service/                Servicos de e-mail e paginas auxiliares
+          util/                   Utilitarios HTTP, JSON e seguranca
+        database/                 Schema SQL e migracoes
+        scripts/                  Scripts que usam o Maven Wrapper
+
+      FrontEnd/
+        pages/                    Telas HTML
+        assets/css/               Estilos das telas
 ```
 
 ## Requisitos
 
-- JDK instalado e `JAVA_HOME` configurado.
+- JDK 17 ou superior instalado e `JAVA_HOME` configurado.
 - MySQL/XAMPP iniciado.
-- Banco criado com `Ars-Promptum/BackEnd/database/ars_database_v2_1.sql`.
+- Banco criado com `Ars-Promptum/BackEnd/database/ars_database_v2_2.sql`.
 - Arquivo `Ars-Promptum/config.env` criado a partir de `Ars-Promptum/config.env.example`.
 
 O backend sobe em:
@@ -88,7 +92,7 @@ http://localhost:8081
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean compile exec:java
 ```
 
@@ -106,7 +110,7 @@ Esse metodo usa o Maven Wrapper versionado no projeto e nao depende de Maven ins
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\scripts\rodar.bat
 ```
 
@@ -124,7 +128,7 @@ Os scripts tambem usam o Maven Wrapper.
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean package
 java -jar target\ars-promptum-backend-1.0.0-SNAPSHOT.jar
 ```
@@ -144,14 +148,14 @@ Execute o JAR a partir da pasta `BackEnd`, para que o `config.env` em `Ars-Promp
 Na raiz `gerenciador_de_prompts`, existe um `pom.xml` agregador. Com Maven instalado no `PATH`, rode:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts
+cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
 mvn clean package
 ```
 
 Para empacotar apenas o modulo do backend:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts
+cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
 mvn -pl Ars-Promptum/BackEnd clean package
 ```
 
@@ -160,8 +164,10 @@ mvn -pl Ars-Promptum/BackEnd clean package
 Com o backend rodando, abra no navegador:
 
 ```text
-C:\xampp\tomcat\webapps\Prompt-Manager-main\gerenciador_de_prompts\Ars-Promptum\FrontEnd\pages\index.html
+http://localhost:8081/
 ```
+
+O Javalin redireciona a raiz para `http://localhost:8081/pages/index.html` e serve os assets de `FrontEnd/assets`.
 
 ## Configuracao
 
@@ -177,7 +183,7 @@ SMTP_PORT=587
 SMTP_USER=seu-email@gmail.com
 SMTP_PASS=sua-senha-de-app
 
-BASE_URL=http://localhost:8080/Ars-Promptum/FrontEnd/pages
+BASE_URL=http://localhost:8081/pages
 ```
 
 Nunca publique `config.env`. Use apenas `config.env.example` como modelo seguro no GitHub.
@@ -205,6 +211,7 @@ GET  /api/admin/usuarios
 POST /api/admin/usuarios/{id}/ativar
 POST /api/admin/usuarios/{id}/desativar
 POST /api/admin/tornar-admin
+POST /api/admin/revogar-admin
 DELETE /api/admin/deletar-usuario/{id}
 GET  /api/admin/prompts
 PUT  /api/admin/prompts/{id}

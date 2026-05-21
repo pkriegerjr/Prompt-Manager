@@ -25,5 +25,4 @@ util\HttpUtil.class
 dao\UsuarioDao.class
 dao\Database.class
 SenhaException.class
-util\RouteHandler.class
 model\Admin.class

@@ -1,9 +1,16 @@
 # Local configuration
-Ars-Promptum/config.env
+config.env
+.env
+.env.*
+!config.env.example
+!.env.example
 
 # Java build outputs
-Ars-Promptum/BackEnd/target/
-Ars-Promptum/BackEnd/out/
+BackEnd/target/
+BackEnd/out/
+target/
+out/
+*.class
 
 # IDE and OS files
 .idea/
@@ -11,3 +18,6 @@ Ars-Promptum/BackEnd/out/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
