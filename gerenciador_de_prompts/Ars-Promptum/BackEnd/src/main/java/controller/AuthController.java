@@ -3,6 +3,12 @@ package controller;
 import dao.AdminDao;
 import dao.LogDao;
 import dao.UsuarioDao;
+import dto.auth.EmailRequest;
+import dto.auth.LoginRequest;
+import dto.auth.LoginResponse;
+import dto.auth.PasswordResetRequest;
+import dto.auth.PasswordUpdateRequest;
+import dto.auth.RegisterRequest;
 import io.javalin.http.Context;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
@@ -12,17 +18,17 @@ import model.Usuario;
 import service.EmailService;
 import service.VerificationPage;
 import util.HttpUtil;
-import util.JsonUtil;
 import util.SecurityUtil;
+import util.SessionToken;
 
 public final class AuthController {
     private AuthController() {}
 
     public static void usuarios(Context ctx) throws Exception {
-        String body = HttpUtil.body(ctx);
-        String user = JsonUtil.str(body,"username");
-        String email = JsonUtil.str(body,"email");
-        String senha = JsonUtil.str(body,"password");
+        RegisterRequest request = ctx.bodyAsClass(RegisterRequest.class);
+        String user = value(request.username);
+        String email = value(request.email);
+        String senha = value(request.password);
 
         try {
             SecurityUtil.validarEmail(email);
@@ -74,7 +80,8 @@ public final class AuthController {
     }
 
     public static void reenviar(Context ctx) throws Exception {
-        String email = JsonUtil.str(HttpUtil.body(ctx),"email");
+        EmailRequest request = ctx.bodyAsClass(EmailRequest.class);
+        String email = value(request.email);
         Usuario usuario = UsuarioDao.buscarPorEmail(email);
         if (usuario == null) { HttpUtil.text(ctx,404,"Email nao encontrado."); return; }
         if (usuario.getVerificado() == 1) { HttpUtil.text(ctx,200,"Conta ja verificada! Faca login."); return; }
@@ -86,9 +93,9 @@ public final class AuthController {
     }
 
     public static void esqueciSenha(Context ctx) throws Exception {
-        String body = HttpUtil.body(ctx);
-        String email = JsonUtil.str(body,"email");
-        String tipo = JsonUtil.or(body,"tipo","usuario");
+        PasswordResetRequest request = ctx.bodyAsClass(PasswordResetRequest.class);
+        String email = value(request.email);
+        String tipo = request.tipo();
         boolean isAdmin = "admin".equals(tipo);
         String token = UUID.randomUUID().toString();
         String username;
@@ -110,11 +117,11 @@ public final class AuthController {
     }
 
     public static void redefinirSenha(Context ctx) throws Exception {
-        String body = HttpUtil.body(ctx);
-        String email = JsonUtil.str(body,"email");
-        String token = JsonUtil.str(body,"token");
-        String novaSenha = JsonUtil.str(body,"novaSenha");
-        String tipo = JsonUtil.or(body,"tipo","usuario");
+        PasswordUpdateRequest request = ctx.bodyAsClass(PasswordUpdateRequest.class);
+        String email = value(request.email);
+        String token = value(request.token);
+        String novaSenha = value(request.novaSenha);
+        String tipo = request.tipo();
         boolean isAdmin = "admin".equals(tipo);
 
         if (novaSenha.length() < 9) { HttpUtil.text(ctx,400,"Senha deve ter no minimo 9 caracteres."); return; }
@@ -135,18 +142,22 @@ public final class AuthController {
     }
 
     public static void login(Context ctx) throws Exception {
-        String body = HttpUtil.body(ctx);
-        String email = JsonUtil.str(body,"email");
-        String senha = JsonUtil.str(body,"password");
-        String tipo = JsonUtil.or(body,"tipo","usuario");
+        LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
+        String email = value(request.email);
+        String senha = value(request.password);
+        String tipo = request.tipo();
 
         if ("admin".equals(tipo)) {
             Admin admin = AdminDao.buscarPorEmail(email);
             if (admin == null || !admin.getPassword().equals(SecurityUtil.sha256(senha))) {
                 HttpUtil.text(ctx,401,"E-mail ou senha incorretos."); return;
             }
-            HttpUtil.json(ctx,200,String.format("{\"tipo\":\"admin\",\"id\":%d,\"username\":\"%s\"}",
-                admin.getId(), JsonUtil.esc(admin.getUsername())));
+            ctx.status(200).json(new LoginResponse(
+                "admin",
+                admin.getId(),
+                admin.getUsername(),
+                SessionToken.emitir("admin", admin.getId())
+            ));
             return;
         }
 
@@ -158,8 +169,12 @@ public final class AuthController {
         if (usuario.getAtivo() == 0) { HttpUtil.text(ctx,403,"Conta desativada. Contate o administrador."); return; }
 
         LogDao.registrarUsuario(usuario.getId(),"LOGIN",null);
-        HttpUtil.json(ctx,200,String.format("{\"tipo\":\"usuario\",\"id\":%d,\"username\":\"%s\"}",
-            usuario.getId(), JsonUtil.esc(usuario.getUsername())));
+        ctx.status(200).json(new LoginResponse(
+            "usuario",
+            usuario.getId(),
+            usuario.getUsername(),
+            SessionToken.emitir("usuario", usuario.getId())
+        ));
     }
 
     private static boolean tokenValido(String tokenSalvo, Timestamp expira, String token, Context ctx) throws Exception {
@@ -170,5 +185,9 @@ public final class AuthController {
             HttpUtil.text(ctx,400,"Token expirado. Solicite um novo link."); return false;
         }
         return true;
+    }
+
+    private static String value(String value) {
+        return value == null ? "" : value.trim();
     }
 }

@@ -17,6 +17,8 @@ public final class AppConfig {
     public static final String SMTP_USER = cfg("SMTP_USER", "");
     public static final String SMTP_PASS = cfg("SMTP_PASS", "");
     public static final String BASE_URL = cfg("BASE_URL", "http://localhost:8081/pages");
+    public static final String SESSION_SECRET = cfg("SESSION_SECRET", "ars-promptum-dev-session-secret");
+    public static final int SESSION_TTL_HOURS = cfgInt("SESSION_TTL_HOURS", 8);
 
     private AppConfig() {}
 

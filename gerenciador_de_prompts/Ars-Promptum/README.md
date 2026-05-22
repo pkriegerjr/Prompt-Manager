@@ -5,7 +5,7 @@ Este projeto roda pelo Maven. O fluxo principal usa o Maven Wrapper do backend, 
 ## Requisitos
 
 - JDK 17 ou superior instalado e `JAVA_HOME` configurado.
-- MySQL/XAMPP iniciado.
+- MySQL iniciado (via XAMPP ou instalacao local).
 - Arquivo `config.env` configurado na pasta `Ars-Promptum`.
 - Banco criado com `BackEnd/database/ars_database_v2_2.sql`.
 
@@ -58,7 +58,7 @@ http://localhost:8081
 No PowerShell, entre na pasta do backend:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\........\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean compile exec:java
 ```
 
@@ -74,7 +74,7 @@ cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
 No Windows:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\........\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\scripts\rodar.bat
 ```
 
@@ -92,7 +92,7 @@ Os scripts tambem usam o Maven Wrapper.
 No Windows:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\.........\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean package
 java -jar target\ars-promptum-backend-1.0.0-SNAPSHOT.jar
 ```
@@ -110,18 +110,63 @@ Execute o JAR a partir da pasta `BackEnd`, para que o `config.env` em `Ars-Promp
 ## Usar o Maven Pai
 
 Na raiz `gerenciador_de_prompts`, existe um `pom.xml` agregador. Com Maven instalado no `PATH`, rode:
+(Não recomendado)
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
+cd C:\........\Prompt-Manager\gerenciador_de_prompts
 mvn clean package
 ```
 
 Para executar apenas o modulo do backend:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
+cd C:\......\Prompt-Manager\gerenciador_de_prompts
 mvn -pl Ars-Promptum/BackEnd clean package
 ```
+Para abrir o servidor usando esse pom.xml da raiz
+
+```powershell
+cd "C:\.....\Prompt-Manager\gerenciador_de_prompts"
+mvn -pl Ars-Promptum/BackEnd clean compile exec:java
+```
+
+## Rodar os Testes
+
+Os testes automatizados ficam em `BackEnd/src/test/java`.
+
+- `AppSmokeTest`: sobe o Javalin em uma porta dinamica e valida rotas HTTP, frontend estatico, handlers globais e autorizacao por token.
+- `SessionTokenTest`: valida emissao, leitura e rejeicao de token malformado/adulterado.
+
+No Windows, usando o Maven Wrapper:
+
+```powershell
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+.\mvnw.cmd test
+```
+
+Para recompilar tudo antes dos testes:
+
+```powershell
+.\mvnw.cmd clean test
+```
+
+No Linux/macOS:
+
+```bash
+cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
+./mvnw test
+```
+
+Tambem e possivel rodar pelo Maven pai, caso o Maven esteja instalado no `PATH`:
+
+```powershell
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts
+mvn -pl Ars-Promptum/BackEnd test
+```
+
+O comando `clean package` tambem executa os testes antes de gerar o JAR. Os relatorios ficam em `BackEnd/target/surefire-reports`, e a pasta `target/` e ignorada pelo Git.
+
+No estado atual, a suite automatizada nao precisa do MySQL ativo, porque os testes cobrem validacoes e bloqueios que acontecem antes do acesso ao banco. Para validar login real, CRUD de prompts e painel admin com dados persistidos, inicie o MySQL e rode o backend em `http://localhost:8081`.
 
 ## Abrir o Frontend
 
@@ -132,3 +177,27 @@ http://localhost:8081/
 ```
 
 O Javalin redireciona a raiz para `http://localhost:8081/pages/index.html` e serve os assets de `FrontEnd/assets`.
+
+Se voce abrir as paginas pelo Live Server do VS Code, normalmente em `http://127.0.0.1:5500`, deixe o backend Javalin rodando em `http://localhost:8081`. Nesse modo, o frontend envia as chamadas de API para `http://localhost:8081/api`. Se aparecer erro `405 Method Not Allowed` em `:5500/api/...`, a pagina esta tentando chamar o Live Server em vez do Javalin.
+
+## Configuracao
+
+O arquivo `config.env` fica na pasta `Ars-Promptum` e deve conter os dados locais do banco, SMTP e sessao:
+
+```text
+DB_URL=jdbc:mysql://localhost:3306/ars_database?useSSL=false&serverTimezone=America/Sao_Paulo&characterEncoding=UTF-8
+DB_USER=root
+DB_PASS=
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-de-app
+
+BASE_URL=http://localhost:8081/pages
+
+SESSION_SECRET=troque-por-uma-chave-local-grande-e-aleatoria
+SESSION_TTL_HOURS=8
+```
+
+`SESSION_SECRET` assina os tokens de login usados pelas rotas administrativas. Use um valor longo e exclusivo no seu ambiente local.

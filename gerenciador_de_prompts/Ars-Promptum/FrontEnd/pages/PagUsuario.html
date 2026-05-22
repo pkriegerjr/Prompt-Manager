@@ -183,13 +183,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API = 'http://localhost:8081/api';
+    const API = window.location.port === '8081' ? '/api' : 'http://localhost:8081/api';
     const usuarioId = sessionStorage.getItem('usuario_id');
     const usuarioIdNumero = Number(usuarioId);
     const usuarioNome = sessionStorage.getItem('usuario_nome');
+    const usuarioToken = sessionStorage.getItem('usuario_token');
     let categoriasBanco = [];
 
-    const usuarioSessaoValido = Number.isInteger(usuarioIdNumero) && usuarioIdNumero > 0;
+    const usuarioSessaoValido = Number.isInteger(usuarioIdNumero) && usuarioIdNumero > 0 && !!usuarioToken;
     if (!usuarioSessaoValido) {
       sessionStorage.clear();
       window.location.replace('View.html');
@@ -206,6 +207,19 @@
 
     function setLoader(visible) {
       document.getElementById('loader').style.display = visible ? 'flex' : 'none';
+    }
+
+    function authHeaders(headers = {}) {
+      return { ...headers, 'Authorization': `Bearer ${usuarioToken}` };
+    }
+
+    function validarRespostaAutenticada(res) {
+      if (res.status === 401) {
+        sessionStorage.clear();
+        window.location.replace('View.html');
+        throw new Error('Sessao expirada.');
+      }
+      return res;
     }
 
     async function carregarCategoriasBanco() {
@@ -241,7 +255,10 @@
       document.getElementById('emptyState').classList.add('d-none');
 
       try {
-        const res  = await fetch(`${API}/prompts?uid=${encodeURIComponent(usuarioIdNumero)}`);
+        const res  = validarRespostaAutenticada(await fetch(`${API}/prompts?uid=${encodeURIComponent(usuarioIdNumero)}`, {
+          headers: authHeaders()
+        }));
+        if (!res.ok) throw new Error('Erro ao carregar prompts');
         const data = await res.json();
         renderGrid(data);
         populaCategorias(data);
@@ -341,7 +358,10 @@
 
     async function abrirEdicao(id) {
       try {
-        const res = await fetch(`${API}/prompts/${id}`);
+        const res = validarRespostaAutenticada(await fetch(`${API}/prompts/${id}`, {
+          headers: authHeaders()
+        }));
+        if (!res.ok) throw new Error('Erro ao carregar prompt');
         const p   = await res.json();
         document.getElementById('modalTitle').innerHTML   = '<i class="bi bi-pencil-square me-2"></i>Editar Prompt';
         document.getElementById('promptId').value         = p.id;
@@ -384,9 +404,10 @@
       try {
         const res = await fetch(url, {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(dados)
         });
+        validarRespostaAutenticada(res);
         if (res.ok) {
           bootstrap.Modal.getInstance(document.getElementById('modalPrompt')).hide();
           toast(id ? 'Prompt atualizado!' : 'Prompt criado!');
@@ -414,7 +435,10 @@
     document.getElementById('btnConfirmarDelete').addEventListener('click', async () => {
       if (!deleteId) return;
       try {
-        const res = await fetch(`${API}/prompts/${deleteId}`, { method: 'DELETE' });
+        const res = validarRespostaAutenticada(await fetch(`${API}/prompts/${deleteId}`, {
+          method: 'DELETE',
+          headers: authHeaders()
+        }));
         if (res.ok) {
           bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
           toast('Prompt excluído.', 'success');
