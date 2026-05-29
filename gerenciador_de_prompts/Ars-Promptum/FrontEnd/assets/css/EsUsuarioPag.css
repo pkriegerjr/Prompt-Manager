@@ -1,0 +1,643 @@
+/* ============================================================
+   dashboard.css — Ars Prompt · Página do Usuário
+   Segue o mesmo design system de style.css (dark/espacial)
+   ============================================================ */
+
+/* ── Variáveis ────────────────────────────────────────────── */
+:root {
+  --bg:          #0b0d14;
+  --surface:     #12151f;
+  --surface-2:   #1a1e2e;
+  --border:      rgba(255, 255, 255, 0.07);
+  --accent:      #7c6aff;
+  --accent-2:    #00d4ff;
+  --accent-glow: rgba(124, 106, 255, 0.25);
+  --text:        #e8eaf6;
+  --text-muted:  #6b7280;
+  --green:       #22c55e;
+  --red:         #ef4444;
+  --font-mono:   'Courier New', monospace;
+}
+
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ── Navbar ───────────────────────────────────────────────── */
+.navbar-dark-custom {
+  background: rgba(11, 13, 20, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+}
+
+.navbar-brand-custom {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-2) !important;
+  letter-spacing: -0.5px;
+  font-family: var(--font-mono);
+  text-decoration: none;
+}
+
+.nav-user-badge {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-nav-outline {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.btn-nav-outline:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: var(--text);
+}
+
+/* ── Stars (reutilizando animação de index.html) ──────────── */
+.stars {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.stars::before,
+.stars::after {
+  content: '';
+  position: absolute;
+  inset: -200px;
+  background-image:
+    radial-gradient(1px 1px at 10%  20%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30%  70%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55%  15%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75%  85%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90%  40%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45%  55%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20%  90%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65%  30%, rgba(255,255,255,.6) 0%, transparent 100%);
+  background-size: 400px 400px;
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+.stars::after {
+  background-size: 300px 300px;
+  animation-duration: 12s;
+  animation-direction: alternate-reverse;
+  opacity: 0.6;
+}
+@keyframes twinkle {
+  0%   { opacity: .4; transform: scale(1);    }
+  100% { opacity: .9; transform: scale(1.05); }
+}
+
+/* ── Dashboard Header ─────────────────────────────────────── */
+.dashboard-header {
+  position: relative;
+  overflow: hidden;
+  padding: 7rem 0 3rem;
+  background: linear-gradient(180deg, #0f1120 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  background: rgba(124, 106, 255, 0.12);
+  border: 1px solid rgba(124, 106, 255, 0.3);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.dashboard-title {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0.5rem 0 0.4rem;
+  letter-spacing: -1px;
+}
+
+.dashboard-sub {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ── Botões de ação (hero) ────────────────────────────────── */
+.btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.btn-hero-primary:hover {
+  background: #6a58ee;
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+/* ── Content section ──────────────────────────────────────── */
+.dashboard-content {
+  padding: 2.5rem 0 5rem;
+}
+
+/* ── Search bar ───────────────────────────────────────────── */
+.search-bar-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.category-select {
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+  transition: border-color 0.2s;
+  appearance: none;
+  
+}
+.category-select:focus { border-color: var(--accent); }
+.category-select option { background: var(--surface-2); }
+
+/* ── Prompt Grid ──────────────────────────────────────────── */
+.prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── Prompt Card ──────────────────────────────────────────── */
+.prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.prompt-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.prompt-card:hover {
+  border-color: rgba(124, 106, 255, 0.35);
+  box-shadow: 0 6px 30px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+.prompt-card:hover::before { opacity: 1; }
+
+.prompt-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prompt-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: var(--accent-2);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.prompt-card:hover .prompt-actions { opacity: 1; }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.icon-btn.edit-btn:hover   { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.icon-btn.delete-btn:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,.1); }
+
+.prompt-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.prompt-card-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prompt-card-content {
+  font-size: 0.83rem;
+  color: #9ca3af;
+  line-height: 1.55;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  font-family: var(--font-mono);
+  max-height: 90px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  flex: 1;
+}
+
+.btn-copy {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+}
+.btn-copy:hover      { border-color: var(--accent-2); color: var(--accent-2); }
+.btn-copy.copied     { border-color: var(--green); color: var(--green); }
+
+/* ── Botão de favorito (card) ─────────────────────────────── */
+
+/* Estado padrão: estrela vazia, cor neutra */
+.icon-btn.fav-btn {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* Hover no estado não-favoritado: fica amarelo */
+.icon-btn.fav-btn:not(.active):hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Estado favoritado: amarelo fixo */
+.icon-btn.fav-btn.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* Hover no estado favoritado: perde o amarelo (indicando que vai remover) */
+.icon-btn.fav-btn.active:hover {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+
+/* ── Botão de filtro de favoritos (barra de busca) ────────── */
+
+/* Estado padrão */
+#btnFiltroFavoritos {
+  width: auto;
+  padding: 0.65rem 0.85rem;
+  color: var(--text-muted);
+  border-color: var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+/* Hover no estado não-ativo: fica amarelo */
+#btnFiltroFavoritos:not(.active):hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Estado ativo (filtro ligado): amarelo fixo */
+#btnFiltroFavoritos.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* Hover no estado ativo: perde o amarelo */
+#btnFiltroFavoritos.active:hover {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+.empty-icon {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+.empty-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.empty-sub {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ── Loader ───────────────────────────────────────────────── */
+.loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.spinner-custom {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Modal ────────────────────────────────────────────────── */
+.modal-dark {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+}
+.modal-header-dark {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding: 1.1rem 1.4rem;
+}
+.modal-header-dark .modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.modal-footer-dark {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 16px 16px;
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.dark-input {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 9px !important;
+  font-size: 0.9rem !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.dark-input::placeholder { color: var(--text-muted) !important; }
+.dark-input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow) !important;
+  outline: none !important;
+}
+
+textarea.dark-input { resize: vertical; min-height: 120px; }
+
+/* ── Botões de formulário ─────────────────────────────────── */
+.btn-primary-custom {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.4rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.btn-primary-custom:hover {
+  background: #6a58ee;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+.btn-primary-custom:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-outline-custom {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 9px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.btn-outline-custom:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.btn-danger-custom {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.4rem;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-danger-custom:hover {
+  background: #dc2626;
+  box-shadow: 0 0 16px rgba(239,68,68,.35);
+}
+
+/* ── Feedback de modal ────────────────────────────────────── */
+.msg-feedback-modal {
+  font-size: 0.82rem;
+  color: var(--red);
+  flex: 1;
+  min-width: 0;
+}
+.msg-feedback-modal.error { color: var(--red); }
+
+/* ── Toast ────────────────────────────────────────────────── */
+.toast-dark {
+  background: var(--surface-2);
+  border: 1px solid var(--border) !important;
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 0.875rem;
+}
+.toast-dark.toast-success .toast-body::before {
+  content: '✓ ';
+  color: var(--green);
+  font-weight: 700;
+}
+.toast-dark.toast-error .toast-body::before {
+  content: '✕ ';
+  color: var(--red);
+  font-weight: 700;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.footer-custom {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Responsivo ───────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .dashboard-header { padding: 6.5rem 0 2rem; }
+  .prompt-grid { grid-template-columns: 1fr; }
+  .search-bar-row { flex-direction: column; }
+  .category-select { min-width: unset; width: 100%; }
+  .modal-footer-dark { justify-content: flex-end; }
+}
+
+/* ── Customizações específicas para inputs de categoria(foco visível) ─────────── */
+.dark-input:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+select.dark-input {
+  appearance: none;
+  cursor: pointer;
+}
