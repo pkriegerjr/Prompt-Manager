@@ -22,6 +22,7 @@ Implementado:
 - Maven Wrapper no backend.
 - JAR executavel gerado pelo Maven Shade Plugin.
 - Projeto Maven pai na raiz para agregar modulos.
+- Testes automatizados com JUnit 5 para smoke test HTTP do Javalin e tokens de sessao.
 
 Em aberto:
 
@@ -63,7 +64,8 @@ Prompt-Manager/
           dao/                    Acesso ao banco de dados
           model/                  Entidades do dominio
           service/                Servicos de e-mail e paginas auxiliares
-          util/                   Utilitarios HTTP, JSON e seguranca
+          util/                   Utilitarios HTTP, seguranca e sessao
+        src/test/java/            Testes automatizados JUnit
         database/                 Schema SQL e migracoes
         scripts/                  Scripts que usam o Maven Wrapper
 
@@ -75,7 +77,7 @@ Prompt-Manager/
 ## Requisitos
 
 - JDK 17 ou superior instalado e `JAVA_HOME` configurado.
-- MySQL/XAMPP iniciado.
+- MySQL iniciado (via XAMPP ou instalacao local).
 - Banco criado com `Ars-Promptum/BackEnd/database/ars_database_v2_2.sql`.
 - Arquivo `Ars-Promptum/config.env` criado a partir de `Ars-Promptum/config.env.example`.
 
@@ -130,7 +132,7 @@ http://localhost:8081
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean compile exec:java
 ```
 
@@ -148,7 +150,7 @@ Esse metodo usa o Maven Wrapper versionado no projeto e nao depende de Maven ins
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\scripts\rodar.bat
 ```
 
@@ -166,7 +168,7 @@ Os scripts tambem usam o Maven Wrapper.
 No Windows PowerShell:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
 .\mvnw.cmd clean package
 java -jar target\ars-promptum-backend-1.0.0-SNAPSHOT.jar
 ```
@@ -186,16 +188,54 @@ Execute o JAR a partir da pasta `BackEnd`, para que o `config.env` em `Ars-Promp
 Na raiz `gerenciador_de_prompts`, existe um `pom.xml` agregador. Com Maven instalado no `PATH`, rode:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts
 mvn clean package
 ```
 
 Para empacotar apenas o modulo do backend:
 
 ```powershell
-cd C:\xampp\tomcat\webapps\Prompt-Manager\gerenciador_de_prompts
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts
 mvn -pl Ars-Promptum/BackEnd clean package
 ```
+
+## Como Rodar os Testes
+
+Os testes ficam em `gerenciador_de_prompts/Ars-Promptum/BackEnd/src/test/java`.
+
+- `AppSmokeTest`: sobe o Javalin em uma porta dinamica e valida rotas HTTP, frontend estatico, handlers globais e autorizacao por token.
+- `SessionTokenTest`: valida emissao, leitura e rejeicao de token malformado/adulterado.
+
+No Windows PowerShell, usando o Maven Wrapper:
+
+```powershell
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts\Ars-Promptum\BackEnd
+.\mvnw.cmd test
+```
+
+Para recompilar tudo antes dos testes:
+
+```powershell
+.\mvnw.cmd clean test
+```
+
+No Linux/macOS:
+
+```bash
+cd /caminho/do/projeto/gerenciador_de_prompts/Ars-Promptum/BackEnd
+./mvnw test
+```
+
+Tambem e possivel rodar pelo Maven pai, caso o Maven esteja instalado no `PATH`:
+
+```powershell
+cd C:\Users\SONY VAIO\OneDrive\Documentos\vscode\Prompt-Manager\gerenciador_de_prompts
+mvn -pl Ars-Promptum/BackEnd test
+```
+
+O comando `clean package` tambem executa os testes antes de gerar o JAR. Os relatorios ficam em `BackEnd/target/surefire-reports`, e a pasta `target/` e ignorada pelo Git.
+
+No estado atual, a suite automatizada nao precisa do MySQL ativo, porque os testes cobrem validacoes e bloqueios que acontecem antes do acesso ao banco. Para validar login real, CRUD de prompts e painel admin com dados persistidos, inicie o MySQL e rode o backend em `http://localhost:8081`.
 
 ## Abrir o Frontend
 
@@ -206,6 +246,8 @@ http://localhost:8081/
 ```
 
 O Javalin redireciona a raiz para `http://localhost:8081/pages/index.html` e serve os assets de `FrontEnd/assets`.
+
+Se voce abrir as paginas pelo Live Server do VS Code, normalmente em `http://127.0.0.1:5500`, deixe o backend Javalin rodando em `http://localhost:8081`. Nesse modo, o frontend envia as chamadas de API para `http://localhost:8081/api`. Se aparecer erro `405 Method Not Allowed` em `:5500/api/...`, a pagina esta tentando chamar o Live Server em vez do Javalin.
 
 ## Configuracao
 
@@ -222,9 +264,14 @@ SMTP_USER=seu-email@gmail.com
 SMTP_PASS=sua-senha-de-app
 
 BASE_URL=http://localhost:8081/pages
+
+SESSION_SECRET=troque-por-uma-chave-local-grande-e-aleatoria
+SESSION_TTL_HOURS=8
 ```
 
 Nunca publique `config.env`. Use apenas `config.env.example` como modelo seguro no GitHub.
+
+`SESSION_SECRET` assina os tokens de login usados pelas rotas administrativas. Use um valor longo e exclusivo no seu ambiente local.
 
 ## Rotas Principais
 

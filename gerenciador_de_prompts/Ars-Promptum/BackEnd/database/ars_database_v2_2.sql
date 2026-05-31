@@ -205,3 +205,6 @@ SELECT
 FROM information_schema.tables
 WHERE table_schema = 'ars_database'
 ORDER BY table_name;
+
+USE ars_database;
+ALTER TABLE prompts ADD COLUMN favorito TINYINT(1) NOT NULL DEFAULT 0;

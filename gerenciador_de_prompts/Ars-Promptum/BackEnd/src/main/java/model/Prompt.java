@@ -9,11 +9,12 @@ public class Prompt {
     private final String titulo;
     private final String conteudo;
     private final String descricao;
+    private final boolean favorito;
     private final String criadoEm;
     private final String atualizadoEm;
 
     public Prompt(int id, int usuarioId, int categoriaId, String categoria, String username,
-                  String titulo, String conteudo, String descricao, String criadoEm, String atualizadoEm) {
+                  String titulo, String conteudo, String descricao, boolean favorito, String criadoEm, String atualizadoEm) {
         this.id = id;
         this.usuarioId = usuarioId;
         this.categoriaId = categoriaId;
@@ -22,6 +23,7 @@ public class Prompt {
         this.titulo = titulo;
         this.conteudo = conteudo;
         this.descricao = descricao;
+        this.favorito = favorito;
         this.criadoEm = criadoEm;
         this.atualizadoEm = atualizadoEm;
     }
@@ -34,6 +36,7 @@ public class Prompt {
     public String getTitulo() { return titulo; }
     public String getConteudo() { return conteudo; }
     public String getDescricao() { return descricao; }
+    public boolean isFavorito() { return favorito; }
     public String getCriadoEm() { return criadoEm; }
     public String getAtualizadoEm() { return atualizadoEm; }
 }

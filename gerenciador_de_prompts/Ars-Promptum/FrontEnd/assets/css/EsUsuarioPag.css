@@ -228,6 +228,8 @@ body {
   outline: none;
   min-width: 180px;
   transition: border-color 0.2s;
+  appearance: none;
+  
 }
 .category-select:focus { border-color: var(--accent); }
 .category-select option { background: var(--surface-2); }
@@ -360,6 +362,68 @@ body {
 }
 .btn-copy:hover      { border-color: var(--accent-2); color: var(--accent-2); }
 .btn-copy.copied     { border-color: var(--green); color: var(--green); }
+
+/* ── Botão de favorito (card) ─────────────────────────────── */
+
+/* Estado padrão: estrela vazia, cor neutra */
+.icon-btn.fav-btn {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* Hover no estado não-favoritado: fica amarelo */
+.icon-btn.fav-btn:not(.active):hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Estado favoritado: amarelo fixo */
+.icon-btn.fav-btn.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* Hover no estado favoritado: perde o amarelo (indicando que vai remover) */
+.icon-btn.fav-btn.active:hover {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+
+/* ── Botão de filtro de favoritos (barra de busca) ────────── */
+
+/* Estado padrão */
+#btnFiltroFavoritos {
+  width: auto;
+  padding: 0.65rem 0.85rem;
+  color: var(--text-muted);
+  border-color: var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+/* Hover no estado não-ativo: fica amarelo */
+#btnFiltroFavoritos:not(.active):hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Estado ativo (filtro ligado): amarelo fixo */
+#btnFiltroFavoritos.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* Hover no estado ativo: perde o amarelo */
+#btnFiltroFavoritos.active:hover {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
 
 /* ── Empty state ──────────────────────────────────────────── */
 .empty-state {

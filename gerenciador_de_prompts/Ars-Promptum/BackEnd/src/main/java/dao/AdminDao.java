@@ -9,6 +9,14 @@ import model.Admin;
 public final class AdminDao {
     private AdminDao() {}
 
+    public static Admin buscarPorId(int id) throws SQLException {
+        try (PreparedStatement ps = Database.getConnection().prepareStatement("SELECT * FROM admins WHERE id=?")) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? map(rs) : null;
+        }
+    }
+
     public static Admin buscarPorEmail(String email) throws SQLException {
         try (PreparedStatement ps = Database.getConnection().prepareStatement("SELECT * FROM admins WHERE email=?")) {
             ps.setString(1, email);

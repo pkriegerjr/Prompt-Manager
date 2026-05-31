@@ -83,6 +83,15 @@ public final class PromptDao {
         }
     }
 
+    public static boolean setFavorito(int id, boolean favorito) throws SQLException {
+        try (PreparedStatement ps = Database.getConnection().prepareStatement(
+            "UPDATE prompts SET favorito=? WHERE id=?")) {
+            ps.setInt(1, favorito ? 1 : 0);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private static Prompt map(ResultSet rs) throws SQLException {
         return new Prompt(
             rs.getInt("id"),
@@ -93,6 +102,7 @@ public final class PromptDao {
             rs.getString("titulo"),
             rs.getString("conteudo"),
             rs.getString("descricao"),
+            rs.getInt("favorito") == 1,
             String.valueOf(rs.getTimestamp("criado_em")),
             String.valueOf(rs.getTimestamp("atualizado_em"))
         );

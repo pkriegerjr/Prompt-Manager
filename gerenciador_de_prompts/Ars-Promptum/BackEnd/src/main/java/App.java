@@ -1,73 +1,30 @@
-import controller.AdminController;
-import controller.AuthController;
-import controller.CategoriaController;
-import controller.PromptController;
 import dao.Database;
 import dao.UsuarioDao;
 import io.javalin.Javalin;
-import io.javalin.http.Handler;
+import io.javalin.http.UnauthorizedResponse;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.router.JavalinDefaultRoutingApi;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Map;
+import middleware.AdminAuthMiddleware;
+import middleware.UserAuthMiddleware;
+import routes.AdminRoutes;
+import routes.AuthRoutes;
+import routes.CategoriaRoutes;
+import routes.PromptRoutes;
 
 public class App {
+    private static final int PORT = 8081;
+
     public static void main(String[] args) throws Exception {
-        try {
-            Database.getConnection();
-            System.out.println("[DB] Banco ars_database conectado!");
-            UsuarioDao.migrarSenhas();
-            Database.migrarSchema();
-        } catch (SQLException e) {
-            System.err.println("[ERRO] Nao foi possivel conectar ao banco: " + e.getMessage());
-            System.err.println(">>> Verifique se o MySQL do XAMPP esta rodando.");
-            System.exit(1);
-        }
+        initDatabase();
 
-        Javalin app = Javalin.create(config -> {
-            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
-            config.router.ignoreTrailingSlashes = true;
-            config.staticFiles.add(staticFiles -> {
-                staticFiles.hostedPath = "/";
-                staticFiles.directory = Path.of("../FrontEnd").toAbsolutePath().normalize().toString();
-                staticFiles.location = Location.EXTERNAL;
-            });
-
-            config.routes.get("/", ctx -> ctx.redirect("/pages/index.html"));
-            config.routes.post("/api/usuarios", route(AuthController::usuarios));
-            config.routes.get("/api/verificar", route(AuthController::verificar));
-            config.routes.post("/api/reenviar", route(AuthController::reenviar));
-            config.routes.post("/api/esqueci-senha", route(AuthController::esqueciSenha));
-            config.routes.post("/api/redefinir-senha", route(AuthController::redefinirSenha));
-            config.routes.post("/api/login", route(AuthController::login));
-
-            config.routes.get("/api/prompts", route(PromptController::listarPorUsuario));
-            config.routes.get("/api/prompts/{id}", route(PromptController::buscarPorId));
-            config.routes.post("/api/prompts", route(PromptController::criar));
-            config.routes.put("/api/prompts/{id}", route(PromptController::atualizar));
-            config.routes.delete("/api/prompts/{id}", route(PromptController::deletar));
-
-            config.routes.get("/api/categorias", route(CategoriaController::categorias));
-
-            config.routes.get("/api/admin/stats", route(AdminController::stats));
-            config.routes.get("/api/admin/usuarios", route(AdminController::usuarios));
-            config.routes.post("/api/admin/usuarios/{id}/ativar", route(AdminController::ativarUsuario));
-            config.routes.post("/api/admin/usuarios/{id}/desativar", route(AdminController::desativarUsuario));
-            config.routes.post("/api/admin/tornar-admin", route(AdminController::tornarAdmin));
-            config.routes.post("/api/admin/revogar-admin", route(AdminController::revogarAdmin));
-            config.routes.delete("/api/admin/deletar-usuario/{id}", route(AdminController::deletarUsuario));
-            config.routes.get("/api/admin/prompts", route(AdminController::prompts));
-            config.routes.put("/api/admin/prompts/{id}", route(AdminController::atualizarPrompt));
-            config.routes.delete("/api/admin/prompts/{id}", route(AdminController::deletarPrompt));
-            config.routes.get("/api/admin/categorias", route(CategoriaController::adminCategorias));
-            config.routes.post("/api/admin/categorias", route(CategoriaController::criarAdminCategoria));
-            config.routes.put("/api/admin/categorias/{id}", route(CategoriaController::atualizarAdminCategoria));
-            config.routes.delete("/api/admin/categorias/{id}", route(CategoriaController::deletarAdminCategoria));
-            config.routes.get("/api/admin/logs", route(AdminController::logs));
-            config.routes.post("/api/admin/criar-admin", route(AdminController::criarAdmin));
-        }).start(8081);
+        Javalin app = createApp().start(PORT);
 
         System.out.println("========================================");
-        System.out.println("  Ars Prompt rodando em localhost:8081");
+        System.out.println("  Ars Prompt rodando em localhost:" + PORT);
         System.out.println("========================================");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -78,14 +35,78 @@ public class App {
         new java.util.concurrent.CountDownLatch(1).await();
     }
 
-    private static Handler route(Handler handler) {
-        return ctx -> {
-            try {
-                handler.handle(ctx);
-            } catch (Exception e) {
-                System.err.println("[ERRO] " + e.getMessage());
-                ctx.status(500).contentType("text/plain; charset=UTF-8").result("Erro interno: " + e.getMessage());
-            }
-        };
+    public static Javalin createApp() {
+        Javalin app = Javalin.create(config -> {
+            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
+            config.router.ignoreTrailingSlashes = true;
+            config.staticFiles.add(staticFiles -> {
+                staticFiles.hostedPath = "/";
+                staticFiles.directory = frontendDirectory().toString();
+                staticFiles.location = Location.EXTERNAL;
+            });
+
+            registerExceptionHandlers(config.routes);
+            registerRoutes(config.routes);
+        });
+        return app;
+    }
+
+    private static void initDatabase() {
+        try {
+            Database.getConnection();
+            System.out.println("[DB] Banco ars_database conectado!");
+            UsuarioDao.migrarSenhas();
+            Database.migrarSchema();
+        } catch (SQLException e) {
+            System.err.println("[ERRO] Nao foi possivel conectar ao banco: " + e.getMessage());
+            System.err.println(">>> Verifique se o MySQL esta rodando.");
+            System.exit(1);
+        }
+    }
+
+    private static Path frontendDirectory() {
+        Path defaultPath = Path.of("../FrontEnd").toAbsolutePath().normalize();
+        if (Files.exists(defaultPath.resolve("pages/index.html"))) return defaultPath;
+
+        Path fromRepoRoot = Path.of("gerenciador_de_prompts/Ars-Promptum/FrontEnd").toAbsolutePath().normalize();
+        if (Files.exists(fromRepoRoot.resolve("pages/index.html"))) return fromRepoRoot;
+
+        Path fromAggregator = Path.of("Ars-Promptum/FrontEnd").toAbsolutePath().normalize();
+        if (Files.exists(fromAggregator.resolve("pages/index.html"))) return fromAggregator;
+
+        return defaultPath;
+    }
+
+    private static void registerRoutes(JavalinDefaultRoutingApi routes) {
+        routes.get("/", ctx -> ctx.redirect("/pages/index.html"));
+        AuthRoutes.register(routes);
+        routes.before("/api/prompts", UserAuthMiddleware::requireUser);
+        routes.before("/api/prompts/*", UserAuthMiddleware::requireUser);
+        PromptRoutes.register(routes);
+        routes.before("/api/admin/*", AdminAuthMiddleware::requireAdmin);
+        CategoriaRoutes.register(routes);
+        AdminRoutes.register(routes);
+    }
+
+    private static void registerExceptionHandlers(JavalinDefaultRoutingApi routes) {
+        routes.exception(UnauthorizedResponse.class, (e, ctx) -> {
+            System.err.println("[AUTH] " + e.getMessage());
+            ctx.status(401).json(Map.of("erro", e.getMessage()));
+        });
+
+        routes.exception(IllegalArgumentException.class, (e, ctx) -> {
+            System.err.println("[VALIDACAO] " + e.getMessage());
+            ctx.status(400).json(Map.of("erro", e.getMessage()));
+        });
+
+        routes.exception(SQLException.class, (e, ctx) -> {
+            System.err.println("[DB] " + e.getMessage());
+            ctx.status(500).json(Map.of("erro", "Erro ao acessar o banco de dados."));
+        });
+
+        routes.exception(Exception.class, (e, ctx) -> {
+            System.err.println("[ERRO] " + e.getMessage());
+            ctx.status(500).json(Map.of("erro", "Erro interno: " + e.getMessage()));
+        });
     }
 }

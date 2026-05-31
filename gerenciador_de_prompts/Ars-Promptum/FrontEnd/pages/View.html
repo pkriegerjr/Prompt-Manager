@@ -130,7 +130,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API  = 'http://localhost:8081/api';
+    const API  = window.location.port === '8081' ? '/api' : 'http://localhost:8081/api';
     const form = document.getElementById('loginForm');
     const btn  = document.getElementById('btnEntrar');
     const msg  = document.getElementById('mensagem');
@@ -191,6 +191,7 @@
           sessionStorage.setItem('usuario_nome',  data.username);
           sessionStorage.setItem('usuario_tipo',  data.tipo);
           sessionStorage.setItem('usuario_email', document.getElementById('email').value.trim());
+          sessionStorage.setItem('usuario_token', data.token || '');
           showMsg('Login realizado! Redirecionando...', 'success');
           setTimeout(() => {
             window.location.href = data.tipo === 'admin' ? 'admin.html' : 'PagUsuario.html';

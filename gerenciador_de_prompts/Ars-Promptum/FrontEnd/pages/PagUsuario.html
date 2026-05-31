@@ -64,9 +64,15 @@
           <i class="bi bi-search search-icon"></i>
           <input type="text" id="inputBusca" class="search-input" placeholder="Buscar por título ou categoria...">
         </div>
-        <select id="selectCategoria" class="category-select">
-          <option value="">Todas as categorias</option>
-        </select>
+        <div style="position: relative;">
+          <select id="selectCategoria" class="category-select">
+            <option value="">Todas as categorias</option>
+          </select>
+          <i class="bi bi-chevron-down" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#6c757d; pointer-events:none;"></i>
+        </div>
+        <button id="btnFiltroFavoritos" class="icon-btn" title="Mostrar favoritos" onclick="toggleFiltroFavoritos()">
+          <i class="bi bi-star"></i>
+        </button>
       </div>
 
       <!-- Feedback de estado vazio -->
@@ -183,13 +189,15 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API = 'http://localhost:8081/api';
+    const API = window.location.port === '8081' ? '/api' : 'http://localhost:8081/api';
     const usuarioId = sessionStorage.getItem('usuario_id');
     const usuarioIdNumero = Number(usuarioId);
     const usuarioNome = sessionStorage.getItem('usuario_nome');
+    const usuarioToken = sessionStorage.getItem('usuario_token');
     let categoriasBanco = [];
+    let soFavoritos = false;
 
-    const usuarioSessaoValido = Number.isInteger(usuarioIdNumero) && usuarioIdNumero > 0;
+    const usuarioSessaoValido = Number.isInteger(usuarioIdNumero) && usuarioIdNumero > 0 && !!usuarioToken;
     if (!usuarioSessaoValido) {
       sessionStorage.clear();
       window.location.replace('View.html');
@@ -208,6 +216,19 @@
       document.getElementById('loader').style.display = visible ? 'flex' : 'none';
     }
 
+    function authHeaders(headers = {}) {
+      return { ...headers, 'Authorization': `Bearer ${usuarioToken}` };
+    }
+
+    function validarRespostaAutenticada(res) {
+      if (res.status === 401) {
+        sessionStorage.clear();
+        window.location.replace('View.html');
+        throw new Error('Sessao expirada.');
+      }
+      return res;
+    }
+
     async function carregarCategoriasBanco() {
       try {
         const res = await fetch(`${API}/categorias`);
@@ -218,6 +239,38 @@
       } catch {
         toast('Erro ao carregar categorias do banco.', 'error');
       }
+    }
+
+    // Nova função - toggleFavorito
+    async function toggleFavorito(id, atual, btn) {
+    // Busca o estado real no array, evitando dessincronização após cliques.
+      const prompt = todosPrompts.find(p => p.id === id);
+      const novoValor = prompt ? !prompt.favorito : !atual;
+      try {
+        const res = validarRespostaAutenticada(await fetch(`${API}/prompts/${id}/favorito?valor=${novoValor}`, {
+        method: 'PATCH',
+        headers: authHeaders()
+      }));
+        if (res.ok) {
+          if (prompt) prompt.favorito = novoValor;
+          btn.title = novoValor ? 'Remover favorito' : 'Adicionar favorito';
+          btn.className = `icon-btn ${novoValor ? 'fav-btn active' : 'fav-btn'}`;
+          btn.querySelector('i').className = `bi ${novoValor ? 'bi-star-fill' : 'bi-star'}`;
+          // Se o filtro de favoritos estiver ativo e o prompt foi desfavoritado, remove o card.
+          if (soFavoritos && !novoValor) renderGrid(todosPrompts);
+        } else {
+            toast('Erro ao atualizar favorito.', 'error');
+        }
+      } catch { toast('Erro ao conectar.', 'error'); }
+    }
+
+    function toggleFiltroFavoritos() {
+      soFavoritos = !soFavoritos;
+      const btn = document.getElementById('btnFiltroFavoritos');
+      btn.querySelector('i').className = soFavoritos ? 'bi bi-star-fill' : 'bi bi-star';
+      btn.title = soFavoritos ? 'Mostrar todos' : 'Mostrar favoritos';
+      btn.classList.toggle('active', soFavoritos);
+      renderGrid(todosPrompts);
     }
 
     function populaSelectPromptCategorias() {
@@ -241,10 +294,13 @@
       document.getElementById('emptyState').classList.add('d-none');
 
       try {
-        const res  = await fetch(`${API}/prompts?uid=${encodeURIComponent(usuarioIdNumero)}`);
-        const data = await res.json();
-        renderGrid(data);
-        populaCategorias(data);
+        const res  = validarRespostaAutenticada(await fetch(`${API}/prompts?uid=${encodeURIComponent(usuarioIdNumero)}`, {
+          headers: authHeaders()
+        }));
+        if (!res.ok) throw new Error('Erro ao carregar prompts');
+          todosPrompts = await res.json();
+          renderGrid(todosPrompts);
+          populaCategorias(todosPrompts);
       } catch {
         toast('Erro ao conectar com o servidor Java.', 'error');
       } finally {
@@ -260,7 +316,8 @@
       const filtrados = prompts.filter(p => {
         const matchBusca = !busca || p.titulo?.toLowerCase().includes(busca) || p.categoria?.toLowerCase().includes(busca);
         const matchCat   = !cat   || p.categoria === cat;
-        return matchBusca && matchCat;
+        const matchFavorito = !soFavoritos || p.favorito === true;
+        return matchBusca && matchCat && matchFavorito;
       });
 
       grid.innerHTML = '';
@@ -279,6 +336,9 @@
           <div class="prompt-card-header">
             <span class="prompt-badge">${p.categoria || 'Geral'}</span>
             <div class="prompt-actions">
+              <button class="icon-btn ${p.favorito ? 'fav-btn active' : 'fav-btn'}" title="${p.favorito ? 'Remover favorito' : 'Adicionar favorito'}" onclick="toggleFavorito(${p.id}, ${p.favorito}, this)">
+                <i class="bi ${p.favorito ? 'bi-star-fill' : 'bi-star'}"></i>
+              </button>
               <button class="icon-btn edit-btn" title="Editar" onclick="abrirEdicao(${p.id})">
                 <i class="bi bi-pencil"></i>
               </button>
@@ -341,7 +401,10 @@
 
     async function abrirEdicao(id) {
       try {
-        const res = await fetch(`${API}/prompts/${id}`);
+        const res = validarRespostaAutenticada(await fetch(`${API}/prompts/${id}`, {
+          headers: authHeaders()
+        }));
+        if (!res.ok) throw new Error('Erro ao carregar prompt');
         const p   = await res.json();
         document.getElementById('modalTitle').innerHTML   = '<i class="bi bi-pencil-square me-2"></i>Editar Prompt';
         document.getElementById('promptId').value         = p.id;
@@ -384,9 +447,10 @@
       try {
         const res = await fetch(url, {
           method,
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(dados)
         });
+        validarRespostaAutenticada(res);
         if (res.ok) {
           bootstrap.Modal.getInstance(document.getElementById('modalPrompt')).hide();
           toast(id ? 'Prompt atualizado!' : 'Prompt criado!');
@@ -414,7 +478,10 @@
     document.getElementById('btnConfirmarDelete').addEventListener('click', async () => {
       if (!deleteId) return;
       try {
-        const res = await fetch(`${API}/prompts/${deleteId}`, { method: 'DELETE' });
+        const res = validarRespostaAutenticada(await fetch(`${API}/prompts/${deleteId}`, {
+          method: 'DELETE',
+          headers: authHeaders()
+        }));
         if (res.ok) {
           bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
           toast('Prompt excluído.', 'success');

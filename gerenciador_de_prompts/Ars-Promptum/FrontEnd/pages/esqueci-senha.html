@@ -58,7 +58,7 @@
   </div>
 
   <script>
-    const API = 'http://localhost:8081/api';
+    const API = window.location.port === '8081' ? '/api' : 'http://localhost:8081/api';
     const msg = document.getElementById('mensagem');
     const formSolicitar = document.getElementById('formSolicitar');
     const formRedefinir = document.getElementById('formRedefinir');
